@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Self-hosted literature review tracker: an Express API (Node 24) with a Svelte 5 + Vite 8 SPA. Components are written in Svelte 4 syntax, which Svelte 5 compiles in legacy mode. Corpus content lives in plain JSON files and users in a JSON file. There is no database. Sign-in requires 2FA (TOTP) for every account, and access is role-based (RBAC). The auth design follows [nuttkku/2FA-example-coding](https://github.com/nuttkku/2FA-example-coding).
+Self-hosted literature review tracker: an Express 5 API (Node 24) with a Svelte 5 + Vite 8 SPA. Components are written in Svelte 4 syntax, which Svelte 5 compiles in legacy mode. Corpus content lives in plain JSON files and users in a JSON file. There is no database. Sign-in requires 2FA (TOTP) for every account, and access is role-based (RBAC). The auth design follows [nuttkku/2FA-example-coding](https://github.com/nuttkku/2FA-example-coding).
 
 ## Workflow rules (standing agreement)
 

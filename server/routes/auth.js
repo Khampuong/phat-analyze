@@ -75,7 +75,7 @@ router.post('/2fa/setup', requirePreAuth('setup'), wrap(async (req, res) => {
 router.post('/2fa/setup/confirm', twoFaLimiter, requirePreAuth('setup'), wrap(async (req, res) => {
   const user = req.preAuthUser
   if (!user.totpSecretEnc) return res.status(400).json({ error: 'No 2FA setup in progress. Please start again.' })
-  const step = matchTotpStep(decryptSecret(user.totpSecretEnc), req.body?.code)
+  const step = await matchTotpStep(decryptSecret(user.totpSecretEnc), req.body?.code)
   if (step === null) {
     recordEvent(req, '2fa_setup_failed', { actor: user.email })
     return res.status(400).json({ error: 'Invalid verification code' })
@@ -96,8 +96,8 @@ router.post('/2fa/verify', twoFaLimiter, requirePreAuth('verify'), wrap(async (r
   if (looksLikeBackupCode(code)) {
     ok = usedBackupCode = await consumeBackupCode(user.id, code)
   } else {
-    const step = matchTotpStep(decryptSecret(user.totpSecretEnc), code)
-    ok = step !== null && (user.totpLastStep === null || step > user.totpLastStep)
+    const step = await matchTotpStep(decryptSecret(user.totpSecretEnc), code, user.totpLastStep)
+    ok = step !== null
     if (ok) setTotpLastStep(user.id, step)
   }
   if (!ok) {

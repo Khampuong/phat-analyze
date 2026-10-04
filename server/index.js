@@ -126,7 +126,8 @@ app.use((err, req, res, next) => {
 
 const distPath = path.join(__dirname, '..', 'dist')
 app.use(express.static(distPath))
-app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')))
+// SPA fallback (Express 5 path syntax: a named wildcard instead of a bare '*')
+app.get('/{*path}', (req, res) => res.sendFile(path.join(distPath, 'index.html')))
 
 app.listen(config.port, () => {
   console.log(`literature-review-tracker listening on port ${config.port}`)

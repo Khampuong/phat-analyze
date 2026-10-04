@@ -170,6 +170,9 @@ async function main() {
   check(health.status === 200, 'health endpoint is up')
   check(/script-src 'self'/.test(health.headers.get('content-security-policy') || ''), 'security headers (CSP) are set')
   check((await anon.get('/api/app-data')).status === 401, 'corpus data needs a session')
+  const deep = await fetch(`${BASE_URL}/some/deep/link`)
+  check(deep.status === 200 && (await deep.text()).includes('<div id="app">'), 'any non-API path serves the app (SPA fallback)')
+  check((await anon.get('/api/nope')).status === 404, 'unknown API paths return 404 JSON, not the app')
 
   // ── Bootstrap admin: password alone never opens a session ──
   const pre = client()

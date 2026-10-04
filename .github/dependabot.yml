@@ -13,3 +13,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Stay on Node LTS lines. Odd majors never become LTS; even majors are taken once they reach
+      # LTS (late October of their release year), by bumping the Dockerfile and CI by hand.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
