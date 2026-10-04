@@ -228,9 +228,13 @@ Then start again from step 2️⃣, defining your domains.
 | 🔄 [CI-CD.md](CI-CD.md) | CI/CD and security scanning |
 | 🛡️ [SECURITY.md](SECURITY.md) | Reporting a vulnerability |
 
-## 🙏 Credits
+## 🙏 Credits and background
 
 Developed by **Wanut Padee**.
+
+💡 **Why it exists:** the developer's own pain point. After reading a lot of papers, it was easy to forget which ones had been read, why one was excluded, or where it was supposed to be cited 😅 This tool keeps all of that in one place.
+
+🤖 **All of the code and documentation was written with AI** ([Claude Code](https://claude.com/claude-code)), based on the developer's ideas and needs. The developer set the direction for design, security, and testing, and reviewed the results.
 
 ## 📄 License
 
