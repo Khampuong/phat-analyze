@@ -1,0 +1,83 @@
+[
+  {
+    "id": 1,
+    "slug": "domain-1-vocational-management",
+    "color": "#6c8fff",
+    "label": "Vocational Management",
+    "fullLabel": "การจัดการวิทยาลัยอาชีวศึกษา (Vocational College Management)",
+    "description": "หลักการ รูปแบบ และองค์ประกอบของการบริหารจัดการสถานศึกษาอาชีวศึกษา (TVET) ที่ใช้เป็นบริบทและขอบเขตงานของวิทยานิพนธ์",
+    "target": 15,
+    "keywords": [
+      "vocational college management",
+      "TVET institution administration",
+      "vocational education management model",
+      "การบริหารสถานศึกษาอาชีวศึกษา",
+      "รูปแบบการบริหารจัดการวิทยาลัยอาชีวศึกษา"
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "domain-2-smart-campus",
+    "color": "#a78bfa",
+    "label": "Smart Campus",
+    "fullLabel": "วิทยาเขตอัจฉริยะ (Smart Campus)",
+    "description": "กรอบแนวคิด สถาปัตยกรรม และองค์ประกอบของ smart campus รวมถึงการเปลี่ยนผ่านสู่ดิจิทัลของสถานศึกษา",
+    "target": 15,
+    "keywords": [
+      "smart campus framework",
+      "smart campus management IoT",
+      "smart campus architecture",
+      "digital transformation vocational education",
+      "วิทยาลัยอัจฉริยะ"
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "domain-3-internet-of-behaviors",
+    "color": "#34d399",
+    "label": "Internet of Behaviors",
+    "fullLabel": "อินเทอร์เน็ตเชื่อมโยงพฤติกรรม (Internet of Behaviors: IoB)",
+    "description": "แนวคิด IoB การเก็บและวิเคราะห์ข้อมูลพฤติกรรมจากอุปกรณ์และระบบดิจิทัล การนำไปใช้ในการศึกษา ตลอดจนประเด็นจริยธรรมและความเป็นส่วนตัว",
+    "target": 15,
+    "keywords": [
+      "Internet of Behaviors",
+      "IoB education",
+      "behavioral data analytics IoT",
+      "learning analytics student behavior",
+      "IoB privacy ethics"
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "domain-4-conversational-avatar",
+    "color": "#fbbf24",
+    "label": "AI Conversational Avatar",
+    "fullLabel": "อวตารโอภาปราศรัย (AI Conversational Avatar)",
+    "description": "แชตบอต ตัวแทนสนทนาแบบมีตัวตน (embodied conversational agent) มนุษย์ดิจิทัล และ generative AI ที่ใช้ให้บริการหรือสนับสนุนงานในสถานศึกษา",
+    "target": 15,
+    "keywords": [
+      "conversational avatar",
+      "embodied conversational agent education",
+      "AI chatbot campus services",
+      "digital human virtual assistant",
+      "generative AI chatbot higher education"
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "domain-5-happy-organization",
+    "color": "#f472b6",
+    "label": "Happy Organization",
+    "fullLabel": "องค์กรแห่งความสุข (Happy Organization)",
+    "description": "แนวคิดและตัวชี้วัดองค์กรแห่งความสุข (เช่น Happy 8, Happinometer) ความผาสุกของบุคลากรและผู้เรียนในสถานศึกษา ซึ่งเป็นผลลัพธ์ปลายทางของงานวิจัย",
+    "target": 15,
+    "keywords": [
+      "happy organization",
+      "happy workplace educational institution",
+      "organizational happiness school",
+      "employee well-being teachers",
+      "องค์กรแห่งความสุข Happy 8",
+      "Happinometer"
+    ]
+  }
+]

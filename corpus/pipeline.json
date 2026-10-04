@@ -1,0 +1,7 @@
+[
+  { "step": 1, "label": "Vocational College Management", "sublabel": "บริบทและขอบเขตงานบริหาร", "color": "#6c8fff", "domain": 1, "papers": [], "note": "กำหนดขอบเขตงานบริหารจัดการที่จะยกระดับ" },
+  { "step": 2, "label": "Smart Campus", "sublabel": "โครงสร้างพื้นฐานและแพลตฟอร์ม", "color": "#a78bfa", "domain": 2, "papers": [], "note": "องค์ประกอบของวิทยาลัยอัจฉริยะที่รองรับการจัดการ" },
+  { "step": 3, "label": "Internet of Behaviors", "sublabel": "ข้อมูลพฤติกรรม", "color": "#34d399", "domain": 3, "papers": [], "note": "เก็บและวิเคราะห์พฤติกรรมเพื่อใช้ตัดสินใจ" },
+  { "step": 4, "label": "AI Conversational Avatar", "sublabel": "ส่วนติดต่อผู้ใช้", "color": "#fbbf24", "domain": 4, "papers": [], "note": "ช่องทางสื่อสารและให้บริการแก่ผู้เรียนและบุคลากร" },
+  { "step": 5, "label": "Happy Organization", "sublabel": "ผลลัพธ์ปลายทาง", "color": "#f472b6", "domain": 5, "papers": [], "note": "ตัวชี้วัดความสุขขององค์กรที่ใช้ประเมินผล" }
+]

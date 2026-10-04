@@ -1,0 +1,17 @@
+# Read automatically by `docker compose`. Points the app at this thesis' corpus (./corpus) instead
+# of the example corpus in ./data, which stays untouched so the tests and upstream merges keep working.
+services:
+  app:
+    environment:
+      - TWOFA_ISSUER=${TWOFA_ISSUER:-Phat Analyze}
+      # Single-user install: REQUIRE_2FA=false in .env signs in with email + password only.
+      - REQUIRE_2FA=${REQUIRE_2FA:-true}
+      # Discover tab: paper search through Perplexity. Leave the key empty in .env to keep it off.
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY:-}
+      - PERPLEXITY_DOMAIN_FILTER=${PERPLEXITY_DOMAIN_FILTER:-}
+    # Only this computer can open the app (the base file publishes port 3000 to the whole network).
+    # Needed while REQUIRE_2FA=false; remove these two lines to reach it from other devices again.
+    ports: !override
+      - "127.0.0.1:3000:80"
+    volumes:
+      - ./corpus:/app/data
