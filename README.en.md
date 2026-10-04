@@ -9,6 +9,18 @@ You decide which research domains your review has to cover. Then you log every p
 - 🔐 **Secure:** every account signs in with a password **and** an authenticator app. 2FA is required and can't be turned off, and each person can only do what their role allows.
 - 💾 **Your data stays yours:** everything is kept in plain JSON files on your own machine. No cloud, no database.
 
+> 🤖 **Tip: easiest with an AI assistant**
+>
+> Clone this repo and open it with an AI coding assistant such as [Claude Code](https://claude.com/claude-code). The repo includes [CLAUDE.md](CLAUDE.md), which explains the structure, how to run it, and how to test it, so the assistant can help right away without extra explaining. Ask in plain language, for example:
+>
+> - 💬 "Install this and open the app for me"
+> - 💬 "Import the papers from this BibTeX / Excel file into the corpus"
+> - 💬 "Add a field for the dataset each paper uses"
+>
+> ⚠️ The assistant can read the files in the folder, including your research data in `data/`. If that data is unpublished or confidential, check your AI tool's data terms first.
+>
+> You don't need AI. The [install](#-install) steps below work on their own.
+
 ---
 
 ## ✨ What you get
