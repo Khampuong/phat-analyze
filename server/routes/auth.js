@@ -23,10 +23,11 @@ async function startFullSession(req, user) {
 }
 
 function me(user) {
-  return { ...publicUser(user), permissions: permissionsFor(user.role) }
+  return { ...publicUser(user), permissions: permissionsFor(user.role), twoFactorRequired: config.require2fa }
 }
 
-// Step 1: password. Never opens a session by itself; it always leads to a 2FA stage.
+// Step 1: password. Never opens a session by itself; it always leads to a 2FA stage
+// (unless the install has switched 2FA off with REQUIRE_2FA=false).
 router.post('/login', loginLimiter, wrap(async (req, res) => {
   const { email, password } = req.body || {}
   if (typeof email !== 'string' || typeof password !== 'string' || !email || !password || password.length > 128) {
@@ -54,6 +55,12 @@ router.post('/login', loginLimiter, wrap(async (req, res) => {
   if (user.status !== 'active') {
     recordEvent(req, 'login_disabled', { actor: user.email })
     return res.status(403).json({ error: 'This account has been disabled. Contact an administrator.' })
+  }
+
+  if (!config.require2fa) {
+    await startFullSession(req, user)
+    recordEvent(req, 'login_success', { actor: user.email })
+    return res.json({ stage: 'complete', user: me(user) })
   }
 
   await regenerate(req)

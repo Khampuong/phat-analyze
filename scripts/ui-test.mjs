@@ -50,6 +50,7 @@ fs.cpSync(path.join(ROOT, 'data'), path.join(dir, 'data'), { recursive: true })
 const port = 5600 + Math.floor(Math.random() * 300)
 const env = { ...process.env }
 for (const k of ['ADMIN_EMAIL', 'ADMIN_PASSWORD', 'NODE_ENV', 'SEED_TEST_USERS']) delete env[k] // development mode: default test accounts
+delete env.PERPLEXITY_API_KEY // the Discover check must never call the real service
 const server = spawn(process.execPath, [path.join(ROOT, 'server/index.js')], {
   cwd: dir,
   env: { ...env, PORT: String(port), DATA_DIR: path.join(dir, 'data'), STATE_DIR: path.join(dir, 'state'), AUTH_ENV_PATH: path.join(dir, 'x.env'), TOTP_ENCRYPTION_KEY: crypto.randomBytes(32).toString('hex') },
@@ -183,6 +184,12 @@ try {
   await waitFor(`document.querySelector('.logo-title')?.textContent === 'My Thesis Review'`, 'title updated')
   ok((await js(`return document.querySelector('.logo-title').textContent`)) === 'My Thesis Review', 'Settings: new title shows in the sidebar')
 
+  // Discover: no PERPLEXITY_API_KEY in this run, so the view must explain how to turn search on
+  await clickText('.sv-btn', 'Discover')
+  await waitFor(`document.querySelector('.discover .msg.error')`, 'discover message')
+  ok((await text()).includes('Perplexity is not configured'), 'Discover: without an API key the view explains how to enable it')
+  ok(await js(`return document.querySelectorAll('.discover .chip').length > 0 && [...document.querySelectorAll('.discover .chip, .discover .btn.primary')].every(b => b.disabled)`), 'Discover: domain keywords are listed and search stays off without a key')
+
   // Users and audit log
   await clickText('.sv-btn', 'Users')
   await waitFor(`document.querySelectorAll('.users tbody tr').length >= 3`, 'users table')
@@ -211,7 +218,7 @@ try {
   console.log('\n=== user@example.com (read-only role) ===')
   await signInFirstTime('user@example.com', 'User@12345')
   const ut = await tabs()
-  ok(!ut.includes('Manage Data') && !ut.includes('Users') && !ut.includes('Audit Log'), 'user sees no Manage Data / Users / Audit Log tabs', ut.join(', '))
+  ok(!ut.includes('Discover') && !ut.includes('Manage Data') && !ut.includes('Users') && !ut.includes('Audit Log'), 'user sees no Discover / Manage Data / Users / Audit Log tabs', ut.join(', '))
   ok((await js(`return document.querySelector('.logo-title').textContent`)) === 'My Thesis Review', "user sees the admin's saved changes")
   await clickText('button', 'Sign out')
   await waitFor(`document.querySelector('input[type=email]')`, 'sign-in')

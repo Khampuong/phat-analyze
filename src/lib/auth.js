@@ -23,7 +23,7 @@ const post = (url, body) => request(url, { method: 'POST', body: JSON.stringify(
 
 // ── Sign-in: password → forced 2FA setup or verify → full session ──
 export const me = () => request('/api/auth/me').catch(() => null)
-export const login = (email, password) => post('/api/auth/login', { email, password }) // { stage: 'setup_required' | 'verify_required' }
+export const login = (email, password) => post('/api/auth/login', { email, password }) // { stage: 'setup_required' | 'verify_required' }, or { stage: 'complete', user } when 2FA is off
 export const startTwoFactorSetup = () => post('/api/auth/2fa/setup') // { qrCodeDataUrl, secret }
 export const confirmTwoFactorSetup = (code) => post('/api/auth/2fa/setup/confirm', { code }) // { backupCodes, user }
 export const verifyTwoFactor = (code) => post('/api/auth/2fa/verify', { code }) // { user }
@@ -34,6 +34,8 @@ export const regenerateBackupCodes = () => post('/api/auth/2fa/backup-codes/rege
 // ── Corpus ──
 export const fetchAppData = () => request('/api/app-data')
 export const saveCollection = (name, value) => request(`/api/data/${name}`, { method: 'PUT', body: JSON.stringify(value) })
+export const discoverStatus = () => request('/api/discover') // { enabled }
+export const discoverPapers = (query) => post('/api/discover', { query }) // { results }
 
 // ── User management (users:read / users:write) and audit log (audit:read) ──
 export const listUsers = () => request('/api/admin/users')

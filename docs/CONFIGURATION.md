@@ -12,11 +12,15 @@ Set these in `.env` next to `docker-compose.yml` (Docker Compose reads it), or i
 | `STATE_DIR` | `./state` | Users, sessions, session secret, audit log |
 | `COOKIE_SECURE` | `false` | `true` when served over HTTPS. Also turns on HSTS |
 | `TRUST_PROXY` | `false` | Number of reverse-proxy hops to trust for the client IP (e.g. `1`). Leave `false` without a proxy, otherwise clients can fake their IP and get around the rate limits |
+| `REQUIRE_2FA` | `true` | `false` turns two-factor sign-in off for everyone (email + password only). Meant for a single-user install on your own machine; do not use it on a server other people can reach |
 | `TWOFA_ISSUER` | `Literature Review Tracker` | Name shown next to the code in authenticator apps |
 | `SESSION_SECRET` | generated | Fixed session secret (32+ characters). If unset, one is generated into `state/` |
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MINUTES` | `5`, `15` | Account lockout after wrong passwords |
 | `RATE_LIMIT_LOGIN`, `RATE_LIMIT_2FA` | `20`, `10` | Requests per IP per 15 min (sign-in) and per 5 min (2FA) |
 | `RATE_LIMIT_API` | `600` | All requests per IP per minute |
+| `PERPLEXITY_API_KEY` | — | Turns on the **Discover** tab: paper search through the Perplexity Search API, with authors, venue, year and DOI checked against Crossref. Each search is one paid Perplexity request |
+| `PERPLEXITY_DOMAIN_FILTER` | built-in scholarly list | Comma-separated sites to search (up to 20), or `none` for the whole web |
+| `RATE_LIMIT_DISCOVER` | `30` | Discover searches per IP per 15 min |
 | `SEED_TEST_USERS` | `true` outside production | Create the development test accounts (see [DEVELOPMENT.md](DEVELOPMENT.md#-test-accounts)). Ignored in production |
 | `TEST_MANAGER_EMAIL` / `_PASSWORD`, `TEST_USER_EMAIL` / `_PASSWORD` | see DEVELOPMENT.md | Override the test accounts |
 

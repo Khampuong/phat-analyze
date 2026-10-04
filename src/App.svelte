@@ -10,6 +10,7 @@
   import ChartsView from './lib/components/ChartsView.svelte'
   import Login from './lib/components/Login.svelte'
   import AccountPanel from './lib/components/AccountPanel.svelte'
+  import DiscoverView from './lib/components/DiscoverView.svelte'
   import ManageData from './lib/components/manage/ManageData.svelte'
   import UsersView from './lib/components/UsersView.svelte'
   import AuditLogView from './lib/components/AuditLogView.svelte'
@@ -91,7 +92,7 @@
   // Tabs follow the RBAC permissions the server sends with the user (see server/permissions.js).
   $: tabs = [
     ...baseTabs,
-    ...(can(user, 'corpus:write') ? [{ id: 'manage', label: 'Manage Data' }] : []),
+    ...(can(user, 'corpus:write') ? [{ id: 'discover', label: 'Discover' }, { id: 'manage', label: 'Manage Data' }] : []),
     ...(can(user, 'users:read') ? [{ id: 'users', label: 'Users' }] : []),
     ...(can(user, 'audit:read') ? [{ id: 'audit', label: 'Audit Log' }] : []),
   ]
@@ -228,6 +229,8 @@
             {config.pipelineTitle}
           {:else if activeTab === 'charts'}
             Corpus Charts
+          {:else if activeTab === 'discover'}
+            Discover Papers
           {:else if activeTab === 'manage'}
             Manage Data
           {:else if activeTab === 'users'}
@@ -313,6 +316,9 @@
 
       {:else if activeTab === 'manage'}
         <ManageData {appData} refresh={refreshAppData} />
+
+      {:else if activeTab === 'discover'}
+        <DiscoverView {appData} refresh={refreshAppData} />
 
       {:else if activeTab === 'users'}
         <UsersView {user} canWrite={can(user, 'users:write')} />

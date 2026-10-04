@@ -75,6 +75,12 @@
       </div>
     </section>
 
+    {#if user.twoFactorRequired === false}
+    <section class="section">
+      <div class="section-title">Two-factor authentication</div>
+      <p class="hint">Off for this install (REQUIRE_2FA=false). Sign-in needs only your password.</p>
+    </section>
+    {:else}
     <section class="section">
       <div class="section-title">Two-factor authentication</div>
       <div class="you-row">
@@ -96,6 +102,7 @@
       {#if codesError}<div class="msg error">{codesError}</div>{/if}
       <p class="hint">Lost your authenticator app and your backup codes? Ask an admin to reset your 2FA, then set it up again at your next sign-in.</p>
     </section>
+    {/if}
 
     <section class="section">
       <div class="section-title">Change my password</div>

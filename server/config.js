@@ -37,6 +37,13 @@ function parseTrustProxy(raw) {
   return raw // IP / subnet list, passed straight to Express
 }
 
+const DEFAULT_SCHOLARLY_SITES = [
+  'sciencedirect.com', 'springer.com', 'ieee.org', 'acm.org', 'mdpi.com', 'tandfonline.com',
+  'emerald.com', 'wiley.com', 'sagepub.com', 'frontiersin.org', 'nature.com', 'plos.org',
+  'arxiv.org', 'semanticscholar.org', 'researchgate.net', 'eric.ed.gov', 'ncbi.nlm.nih.gov',
+  'tci-thaijo.org', 'doi.org',
+].join(',')
+
 const STATE_DIR = path.resolve(process.env.STATE_DIR || path.join(process.cwd(), 'state'))
 fs.mkdirSync(STATE_DIR, { recursive: true })
 
@@ -51,12 +58,26 @@ export const config = {
   // Older versions kept users + session secret as KEY=value lines here; read once for migration.
   legacyAuthEnvPath: process.env.AUTH_ENV_PATH || path.join(process.cwd(), '.env'),
   totpEncryptionKey: Buffer.from(TOTP_ENCRYPTION_KEY, 'hex'),
+  // Mandatory unless explicitly switched off. Off is only meant for a single-user install that is
+  // reachable from the owner's own machine: sign-in is then email + password alone.
+  require2fa: process.env.REQUIRE_2FA !== 'false',
   twofaIssuer: process.env.TWOFA_ISSUER || 'Literature Review Tracker',
   loginMaxAttempts: intEnv('LOGIN_MAX_ATTEMPTS', 5),
   loginLockMinutes: intEnv('LOGIN_LOCK_MINUTES', 15),
   rateLimitLogin: intEnv('RATE_LIMIT_LOGIN', 20), // per IP per 15 minutes
   rateLimit2fa: intEnv('RATE_LIMIT_2FA', 10), // per IP per 5 minutes
   rateLimitApi: intEnv('RATE_LIMIT_API', 600), // per IP per minute, all requests
+  rateLimitDiscover: intEnv('RATE_LIMIT_DISCOVER', 30), // per IP per 15 minutes; each search is a paid API call
+  // Discover tab (optional): without a key the tab explains how to turn it on.
+  perplexityApiKey: process.env.PERPLEXITY_API_KEY || '',
+  perplexityApiUrl: (process.env.PERPLEXITY_API_URL || 'https://api.perplexity.ai').replace(/\/+$/, ''),
+  crossrefApiUrl: (process.env.CROSSREF_API_URL || 'https://api.crossref.org').replace(/\/+$/, ''),
+  // Comma-separated sites to search (Perplexity allows up to 20), or "none" to search the whole web.
+  perplexityDomainFilter: (process.env.PERPLEXITY_DOMAIN_FILTER || DEFAULT_SCHOLARLY_SITES)
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s && s !== 'none')
+    .slice(0, 20),
   preAuthMinutes: 5,
   sessionHours: 12,
 }

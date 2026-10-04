@@ -28,7 +28,7 @@ export function requireAuth({ allowPendingPasswordChange = false } = {}) {
   return (req, res, next) => {
     const auth = req.session.auth
     const user = auth && findById(auth.userId)
-    if (!user || user.status !== 'active' || user.sessionVersion !== auth.sessionVersion || !user.totpEnabled) {
+    if (!user || user.status !== 'active' || user.sessionVersion !== auth.sessionVersion || (config.require2fa && !user.totpEnabled)) {
       delete req.session.auth
       return res.status(401).json({ error: 'Not authenticated' })
     }
@@ -70,6 +70,9 @@ export function sameOrigin(req, res, next) {
 
 // General ceiling for every request that reads files (API and the SPA fallback), against floods.
 export const apiLimiter = limiter(1, config.rateLimitApi, 'Too many requests. Please slow down.')
+
+// Each Discover search is a paid Perplexity call.
+export const discoverLimiter = limiter(15, config.rateLimitDiscover, 'Too many searches. Please try again later.')
 
 export const loginLimiter = limiter(15, config.rateLimitLogin, 'Too many sign-in attempts. Please try again later.')
 // Stricter than login: a 6-digit code is far easier to guess than a password.

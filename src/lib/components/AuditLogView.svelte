@@ -11,6 +11,7 @@
     login_failed: 'Wrong password',
     login_locked: 'Account locked',
     login_disabled: 'Sign-in to disabled account',
+    login_success: 'Signed in (password only, 2FA off)',
     login_password_verified: 'Password OK, 2FA pending',
     '2fa_setup_complete': '2FA set up',
     '2fa_setup_failed': '2FA setup code wrong',
@@ -25,6 +26,7 @@
     admin_password_reset: 'Password reset by admin',
     admin_2fa_reset: '2FA reset by admin',
     data_saved: 'Data saved',
+    discover_search: 'Perplexity search',
   }
   const DANGER = new Set(['login_failed', 'login_locked', 'login_disabled', '2fa_setup_failed', '2fa_verify_failed'])
 

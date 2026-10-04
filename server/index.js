@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 import { config, sessionSecret } from './config.js'
 import { FileSessionStore } from './sessionStore.js'
 import { loadUsers, bootstrapAdmin, seedTestUsers } from './users.js'
-import { requireAuth, requirePermission, sameOrigin, apiLimiter } from './middleware.js'
+import { requireAuth, requirePermission, sameOrigin, apiLimiter, discoverLimiter } from './middleware.js'
 import { recordEvent } from './audit.js'
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
@@ -14,6 +14,7 @@ import { getAppData } from './appData.js'
 import { loadPdfIndex, getPdfPath } from './papers.js'
 import { DATA_DIR, loadConfig, loadData } from './data.js'
 import { COLLECTION_NAMES, saveCollection, migrateCustomPapers } from './dataStore.js'
+import { discoverPapers, discoverEnabled } from './discover.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,6 +25,7 @@ if (admin) console.log(`Created first admin account: ${admin}`)
 else console.log(`Loaded ${count} users`)
 const testUsers = await seedTestUsers()
 if (testUsers.length) console.warn(`Development mode: created test accounts ${testUsers.join(', ')}. They are never created when NODE_ENV=production.`)
+if (!config.require2fa) console.warn('REQUIRE_2FA=false: two-factor sign-in is OFF. Anyone who can reach this server needs only a password.')
 loadData() // fail fast on malformed JSON instead of on the first request
 console.log(`Loaded corpus data from ${DATA_DIR}`)
 const migratedPapers = migrateCustomPapers()
@@ -110,6 +112,23 @@ app.put('/api/data/:name', requireAuth(), requirePermission('corpus:write'), (re
       return res.status(500).json({ error: `Cannot write to ${DATA_DIR}. Make sure the data folder is writable (not mounted read-only).` })
     }
     res.status(e.status || 500).json({ error: e.message })
+  }
+})
+
+// "Discover" tab: candidate papers from Perplexity, checked against Crossref. Nothing is saved
+// here; accepting or rejecting a candidate goes through PUT /api/data like any other edit.
+app.get('/api/discover', requireAuth(), requirePermission('corpus:write'), (req, res) => res.json({ enabled: discoverEnabled() }))
+
+app.post('/api/discover', requireAuth(), requirePermission('corpus:write'), discoverLimiter, async (req, res) => {
+  const query = typeof req.body?.query === 'string' ? req.body.query.trim() : ''
+  if (query.length < 3 || query.length > 300) return res.status(400).json({ error: 'Search text must be 3 to 300 characters' })
+  try {
+    const results = await discoverPapers(query)
+    recordEvent(req, 'discover_search', { query, results: results.length })
+    res.json({ results })
+  } catch (e) {
+    if (!e.status) console.error(e)
+    res.status(e.status || 500).json({ error: e.status ? e.message : 'Something went wrong' })
   }
 })
 

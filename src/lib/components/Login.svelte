@@ -52,8 +52,9 @@
   }
 
   const submitPassword = () => run(async () => {
-    const { stage } = await login(email, password)
+    const { stage, user } = await login(email, password)
     password = ''
+    if (stage === 'complete') return dispatch('success', user) // REQUIRE_2FA=false on the server
     if (stage === 'setup_required') {
       step = 'setup'
       setup = await startTwoFactorSetup()

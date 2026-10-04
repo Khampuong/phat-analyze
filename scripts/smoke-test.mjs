@@ -10,6 +10,7 @@
 import { spawn } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
+import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -36,6 +37,7 @@ function check(cond, msg, detail) {
   pass(msg)
 }
 async function cleanup() {
+  stub?.close()
   if (server && server.exitCode === null) {
     const exited = new Promise((resolve) => server.once('exit', resolve))
     server.kill()
@@ -113,6 +115,45 @@ async function enrol(email, password, newPassword) {
   return { c, secret: setup.data.secret, backupCodes: confirm.data.backupCodes, user: confirm.data.user }
 }
 
+// Stand-in for the Perplexity Search API and Crossref, so the Discover checks run offline.
+let stub = null
+let stubUrl = ''
+const stubCalls = { perplexity: [] }
+const LSTM_WORK = {
+  DOI: '10.1162/neco.1997.9.8.1735',
+  title: ['Long Short-Term Memory'],
+  author: [{ family: 'Hochreiter' }, { family: 'Schmidhuber' }],
+  'container-title': ['Neural Computation'],
+  issued: { 'date-parts': [[1997, 11]] },
+}
+async function startStub() {
+  stub = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://stub')
+    const json = (status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body))
+    if (req.method === 'POST' && url.pathname === '/search') {
+      stubCalls.perplexity.push({ auth: req.headers.authorization })
+      return json(200, {
+        results: [
+          { title: 'Long Short-Term Memory | Neural Computation | MIT Press', url: 'https://direct.mit.edu/neco/article/9/8/1735', snippet: 'LSTM…', date: '1997-11-15' },
+          { title: 'Long Short-Term Memory', url: 'https://doi.org/10.1162/neco.1997.9.8.1735', snippet: 'Same paper, second site' },
+          { title: 'A page Crossref has never heard of', url: 'https://example.org/blog/post', snippet: 'Not a paper' },
+          { title: 'Attention Is All You Need', url: 'https://example.org/attention', snippet: 'Transformer' },
+        ],
+      })
+    }
+    if (url.pathname === '/crossref/works/10.1162%2Fneco.1997.9.8.1735') return json(200, { message: LSTM_WORK })
+    if (url.pathname === '/crossref/works') {
+      const wanted = url.searchParams.get('query.bibliographic') || ''
+      // Like the real service, always answer with its closest match, even a wrong one.
+      return json(200, { message: { items: [wanted.startsWith('Long Short-Term Memory') ? LSTM_WORK : { ...LSTM_WORK, DOI: '10.1/other', title: ['An Unrelated Study of Something Else Entirely'] }] } })
+    }
+    json(404, {})
+  })
+  await new Promise((resolve) => stub.listen(0, '127.0.0.1', resolve))
+  stubUrl = `http://127.0.0.1:${stub.address().port}`
+  return stubUrl
+}
+
 let serverEnv = null
 async function startServer() {
   if (!serverEnv) {
@@ -134,6 +175,10 @@ async function startServer() {
       RATE_LIMIT_2FA: '500',
       RATE_LIMIT_API: '5000',
       SEED_TEST_USERS: 'false', // the test creates its own manager/user accounts
+      // Discover must never reach the real services from a test run.
+      PERPLEXITY_API_KEY: 'smoke-test-key',
+      PERPLEXITY_API_URL: await startStub(),
+      CROSSREF_API_URL: `${stubUrl}/crossref`,
     }
   }
   server = spawn(process.execPath, [path.join(ROOT, 'server', 'index.js')], {
@@ -218,6 +263,22 @@ async function main() {
   const bad = await mgr.c.put('/api/data/papers', [{ id: 1, domain: 999, score: 5, title: 't', authors: 'a', venue: 'v', year: 2020 }])
   check(bad.status === 400, 'data validation still applies (unknown domain rejected)')
 
+  // ── Discover (Perplexity search checked against Crossref; both stubbed below) ──
+  if (stub) {
+    check((await anon.post('/api/discover', { query: 'transformers' })).status === 401, 'discover needs a session')
+    check((await user.c.post('/api/discover', { query: 'transformers' })).status === 403, 'user cannot run a discover search (corpus:write)')
+    check((await mgr.c.get('/api/discover')).data?.enabled === true, 'discover reports that a key is configured')
+    check((await mgr.c.post('/api/discover', { query: 'x' })).status === 400, 'too-short discover search is rejected')
+    const found = await mgr.c.post('/api/discover', { query: 'transformers' })
+    const byTitle = Object.fromEntries((found.data?.results || []).map((r) => [r.title, r]))
+    check(found.status === 200 && found.data.results.length === 3, 'manager gets discover results, duplicates of one paper merged', found)
+    const lstm = byTitle['Long Short-Term Memory']
+    check(lstm?.verified && lstm.authors === 'Hochreiter & Schmidhuber' && lstm.year === 1997 && lstm.known === 'paper', 'discover takes metadata from Crossref and flags papers already in the corpus', lstm)
+    const unknown = byTitle['A page Crossref has never heard of']
+    check(unknown && !unknown.verified && !unknown.doi && !unknown.authors, 'a hit Crossref cannot match comes back unverified, with no invented metadata', unknown)
+    check(stubCalls.perplexity.every((c) => c.auth === 'Bearer smoke-test-key'), 'the Perplexity key is sent by the server only')
+  }
+
   // ── Later sign-ins: TOTP (no replay) or single-use backup codes ──
   const relogin = async (code) => {
     const c = client()
@@ -271,6 +332,24 @@ async function main() {
 
   await admin.c.post('/api/auth/logout')
   check((await admin.c.get('/api/auth/me')).status === 401, 'logout ends the session')
+
+  // ── REQUIRE_2FA=false: the single-user switch. Password alone signs in; everything else still applies ──
+  if (serverEnv) {
+    serverEnv.REQUIRE_2FA = 'false'
+    await restartServer()
+    // The manager's 2FA was reset above, so with 2FA on this account could only reach the setup step.
+    const solo = client()
+    check((await solo.post('/api/auth/login', { email: mgrEmail, password: 'wrong-password' })).status === 401, '2FA off: a wrong password is still refused')
+    const direct = await solo.post('/api/auth/login', { email: mgrEmail, password: 'manager-own-password' })
+    check(direct.status === 200 && direct.data.stage === 'complete' && direct.data.user?.twoFactorRequired === false, '2FA off: the password alone opens a full session', direct)
+    check((await solo.get('/api/app-data')).status === 200, '2FA off: the session can read corpus data')
+    check((await solo.get('/api/admin/audit-logs')).status === 403, '2FA off: role permissions still apply')
+    delete serverEnv.REQUIRE_2FA
+    await restartServer()
+    check((await solo.get('/api/app-data')).status === 401, '2FA back on: a session of an account without 2FA stops working')
+    const back = await client().post('/api/auth/login', { email: mgrEmail, password: 'manager-own-password' })
+    check(back.data?.stage === 'setup_required', '2FA back on: that account must set 2FA up at the next sign-in')
+  }
 
   console.log(`\nAll ${passed} checks passed`)
 }
