@@ -7,7 +7,7 @@ Self-hosted literature review tracker: an Express 5 API (Node 24) with a Svelte 
 1. **Read [CI-CD.md](CI-CD.md) before starting a feature.** It lists what CI enforces and how to run the same checks locally.
 2. **Before committing:** `npm run build && npm test && npm run test:ui`. If Snyk is authenticated, also run `npm run security:scan` and take every finding seriously before calling it a false positive.
 3. **If a change touches sign-in, 2FA, roles, or the data API, add checks to [scripts/smoke-test.mjs](scripts/smoke-test.mjs). If it changes a screen, add them to [scripts/ui-test.mjs](scripts/ui-test.mjs).** These are the regression suites, and CI runs both. The UI test has already caught two bugs that the API test couldn't see.
-4. **When a task is finished, commit and push to GitHub** (`origin`, branch `main`) without waiting to be asked. Update this file with new design decisions, and the README when users would notice the change.
+4. **When a task is finished, commit and push to GitHub** (`origin`, branch `main`) without waiting to be asked. Update this file with new design decisions, and the docs when users would notice the change: `README.md` (Thai, the main user manual) and `README.en.md` (English) together, or the right file in `docs/` (configuration, data format, development).
 5. This repo is a public template. Never commit real research data, personal names, or secrets. `data/` holds only the generic example corpus. The UI and docs are in English.
 
 ## Commands
@@ -64,7 +64,7 @@ docker compose up -d --build         # app on :3000
 - Paper `id` is unique across domains. `num` is `id` padded to two digits, set by the server.
 - `comparison.cells[domainId][paperId][dimIndex]`: a missing cell means `no`.
 - The corpus is sent only through the authenticated API and never bundled into `dist/`.
-- To add a field to a collection, update the validator in `dataStore.js`, the field schema in `ManageData.svelte`, the view that shows it, and the README data reference.
+- To add a field to a collection, update the validator in `dataStore.js`, the field schema in `ManageData.svelte`, the view that shows it, and [docs/DATA-FORMAT.md](docs/DATA-FORMAT.md).
 
 ## Svelte 5 legacy-mode gotchas
 

@@ -1,188 +1,195 @@
-# Literature Review Tracker
+# 📚 Literature Review Tracker
 
-A self-hosted web app for running a literature review, built for thesis and dissertation work. You decide which research domains your review covers. Then you log every paper you read, either into the corpus with your notes or onto a rejected list with the reason. The app shows how well each domain is covered, where the gaps are, and gives you tables and sentences you can paste straight into your chapters.
+🇹🇭 ภาษาไทย · [🇬🇧 English](README.en.md)
 
-It runs on your own machine or server and keeps all your content in plain JSON files you own. Every account signs in with a password **and** an authenticator app (two-factor authentication is required, with no way to turn it off), and what each person can do depends on their role.
+เว็บแอปสำหรับทำ **literature review** ของวิทยานิพนธ์ ติดตั้งบนเครื่องหรือ server ของคุณเอง
 
-## What you get
+คุณกำหนดเองว่างาน review ต้องครอบคลุมสายงานวิจัย (domain) อะไรบ้าง แล้วบันทึกทุกเปเปอร์ที่อ่าน ถ้าผ่านเกณฑ์ก็เอาเข้าคลังพร้อมโน้ต ถ้าไม่ผ่านก็ลงรายการคัดออกพร้อมเหตุผล แอปจะบอกว่าแต่ละ domain ครอบคลุมพอหรือยัง มี research gap ตรงไหน และมีตารางกับประโยคอ้างอิงให้ก๊อปไปใส่ในเล่มได้เลย
 
-| View | What it shows |
-|------|---------------|
-| **Papers** | Papers grouped by domain, with search, sorting, a relevance score, and notes: what the paper does, how, its results, and how you'll use it |
-| **Comparison** | Every paper scored on your own rubric. Exports to `.xlsx`, PNG, or JPG for your thesis |
-| **Domain Tables** | One table of papers per domain (authors, venue, year, relevance, DOI). Exports to `.xlsx` |
-| **Gap Analysis** | Research gaps with priority, status, evidence, and what to search next |
-| **Citations** | Ready-to-paste citation sentences, sorted by where they go in your thesis |
-| **Pipeline** | How your domains connect into your study's method, with coverage bars against each target |
-| **Charts** | Papers per domain and the spread of relevance scores |
-| **Rejected Papers** | What you read and excluded, and why. Keeping this list makes your selection process transparent and easy to report |
-| **Manage Data** *(admins, managers)* | Forms to add, edit, and delete everything above |
-| **Users** *(admins, managers)* | Accounts, roles, 2FA status. Admins can add, disable, and reset users |
-| **Audit Log** *(admins)* | Sign-ins, failed attempts, 2FA events, admin actions, and data saves |
+- 🔐 **ปลอดภัย:** ทุกบัญชีต้องล็อกอินด้วยรหัสผ่าน **และ** แอป authenticator (2FA บังคับ ปิดไม่ได้) และแต่ละคนทำได้แค่ตามสิทธิ์ของ role
+- 💾 **ข้อมูลเป็นของคุณ:** เก็บเป็นไฟล์ JSON ธรรมดาในเครื่องคุณ ไม่มี cloud ไม่มีฐานข้อมูล
 
 ---
 
-## How to use it for your review
+## ✨ มีอะไรให้ใช้
 
-This is the workflow the app is built around. Every step happens in **Manage Data**, under *Views* in the sidebar. You need an admin or manager account to see it.
-
-### 1. Set up the app
-
-Install it ([Quick start](#quick-start-docker)) and sign in. On your first sign-in you'll scan a QR code with an authenticator app and get 10 backup codes (see [Sign-in and two-factor authentication](#sign-in-and-two-factor-authentication)). The app comes with a small example corpus on time-series forecasting, so every view has something to show. Look around, then [clear it out](#starting-from-an-empty-corpus) when you're ready to start.
-
-In **Manage Data → Settings**, set the app title (for example your thesis title), an icon, and a subtitle.
-
-### 2. Define your domains
-
-A *domain* is one strand of literature your review has to cover, such as "Recurrent sequence models" or "Reinforcement learning for control". Most reviews have 3–6.
-
-In **Manage Data → Domains**, add one entry per domain:
-
-- **Domain number** – shown as D1, D2, …
-- **Short name / Full name / Description**
-- **Target paper count** – how many papers you aim to include. The coverage bars measure progress against this number.
-- **Search keywords** – the exact search strings you use in Scopus, Google Scholar, and so on. Writing them down makes your search reproducible.
-- **Slug and color** – the slug is also the folder name for that domain's PDFs.
-
-### 3. Log every paper you read
-
-For each paper you screen, make one decision:
-
-- **Include it** → **Manage Data → Papers → + Add paper.** Choose its domain, give it a relevance score from 1 to 10, and fill in the four notes:
-  - **What** – the paper in one or two sentences
-  - **How** – its method
-  - **Results** – what it found
-  - **Usage** – where you'll cite it and why
-
-  Use tags for quick labels such as "Baseline model" (positive) or "Not time-series data" (warning). Tick *Cite with caution* for preprints or weak evidence.
-- **Exclude it** → **Manage Data → Rejected → + Add rejected paper.** Record a short **reason** and the **batch**, meaning the search round it came from. If you remove a paper you had already included, delete it from Papers, add it here with status `removed`, and put its old number in **Freed paper number**.
-
-The sidebar counts update as you go: papers read, kept, rejected outright, and removed later.
-
-### 4. Score the papers on a rubric
-
-In **Manage Data → Comparison**, list the rubric **dimensions**, the criteria every paper is judged on (for example "Uses real-world data" or "Evaluates decision-making"). Then pick a domain and set a status for each paper and dimension:
-
-| Status | Meaning |
-|--------|---------|
-| ✓ Yes | Fully covers it |
-| ◑ Partial | Partly covers it |
-| · Note | Relevant, with a remark |
-| — No | Doesn't cover it (default) |
-
-Add a short note to explain a cell. The **Comparison** view then shows one table per domain. You can export it as Excel or an image for your literature review chapter.
-
-### 5. Record the gaps
-
-The rubric shows what the literature hasn't done. In **Manage Data → Gaps**, write each gap down with a priority, a status (`open` / `partial` / `closed`), evidence (one line per paper that supports it), the opportunity it gives your study, and what to search next. Close gaps as new papers cover them.
-
-### 6. Draft your citations
-
-In **Manage Data → Citations**, attach a ready-written sentence to a paper. Add where it goes (for example "Chapter 2: Related work") and a short label. The **Citations** view lists them sorted by where they go, each with a copy button.
-
-### 7. Draw the research pipeline
-
-In **Manage Data → Pipeline**, describe how the domains feed into your method, step by step: step 1, 2, 3, and so on, each linked to a domain and its key papers. Use step `0` for one concern that runs across all steps, such as evaluation or ethics. The headings are set in **Settings**.
-
-### 8. Use it in your writing
-
-- Export comparison tables from **Comparison** (`.xlsx`, PNG, JPG) and paper lists from **Domain Tables** (`.xlsx`).
-- Copy citation sentences from **Citations**.
-- Use **Charts** and the rejected-paper counts when you describe your search and selection process.
+| หน้า | แสดงอะไร |
+|------|----------|
+| 📄 **Papers** | เปเปอร์แยกตาม domain ค้นหาและเรียงลำดับได้ มีคะแนนความเกี่ยวข้องและโน้ต 4 ช่อง: ทำอะไร ทำอย่างไร ผลเป็นอย่างไร และจะเอาไปใช้ตรงไหน |
+| 📊 **Comparison** | ให้คะแนนทุกเปเปอร์ตาม rubric ที่คุณตั้งเอง export เป็น `.xlsx`, PNG หรือ JPG ไปใส่ในเล่มได้ |
+| 🗂️ **Domain Tables** | ตารางรายชื่อเปเปอร์ของแต่ละ domain export เป็น `.xlsx` ได้ |
+| 🔍 **Gap Analysis** | research gap พร้อมระดับความสำคัญ สถานะ หลักฐาน และคำค้นที่ควรหาต่อ |
+| ✍️ **Citations** | ประโยคอ้างอิงสำเร็จรูป เรียงตามตำแหน่งที่จะใช้ในเล่ม กด copy ได้เลย |
+| 🧭 **Pipeline** | แต่ละ domain ต่อกันเป็นวิธีวิจัยอย่างไร พร้อมแถบความคืบหน้าเทียบเป้า |
+| 📈 **Charts** | จำนวนเปเปอร์ต่อ domain และการกระจายของคะแนน |
+| 🚫 **Rejected Papers** | เปเปอร์ที่อ่านแล้วไม่เอาพร้อมเหตุผล ทำให้อธิบายกระบวนการคัดเลือกในเล่มได้ชัดเจน |
+| 🛠️ **Manage Data** *(admin, manager)* | ฟอร์มเพิ่ม/แก้/ลบข้อมูลทุกอย่างข้างบน |
+| 👥 **Users** *(admin, manager)* | บัญชีผู้ใช้ role และสถานะ 2FA ให้ admin เพิ่ม ปิด และรีเซ็ตผู้ใช้ได้ |
+| 📜 **Audit Log** *(admin)* | ประวัติการล็อกอิน การล็อกอินผิด เหตุการณ์ 2FA การกระทำของ admin และการบันทึกข้อมูล |
 
 ---
 
-## Quick start (Docker)
+## 🚀 ติดตั้ง
 
-You need [Docker](https://docs.docker.com/get-docker/) with Docker Compose, and an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy, 1Password, …).
+สิ่งที่ต้องมี:
+
+- 🐳 [Docker](https://docs.docker.com/get-docker/) พร้อม Docker Compose
+- 📱 แอป authenticator ในมือถือ เช่น Google Authenticator, Microsoft Authenticator, Authy, 1Password
 
 ```bash
 git clone https://github.com/nuttkku/literature-review-tracker.git && cd literature-review-tracker
-bash scripts/generate-secrets.sh   # creates .env with a random 2FA encryption key and first-admin password
+bash scripts/generate-secrets.sh   # สร้าง .env พร้อมกุญแจเข้ารหัส 2FA และรหัสผ่านของ admin คนแรก
 docker compose up -d --build
 ```
 
-The script prints the first admin's email and password. Open http://localhost:3000, sign in, scan the QR code, and save your backup codes. The first admin is created only while no users exist, so you can delete `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` afterwards.
+1. สคริปต์จะแสดงอีเมลและรหัสผ่านของ admin คนแรก
+2. เปิด **http://localhost:3000** แล้วล็อกอิน
+3. สแกน QR code ด้วยแอป authenticator แล้วเก็บ backup code ไว้ให้ดี
+4. หลังล็อกอินได้แล้ว ลบบรรทัด `ADMIN_EMAIL` / `ADMIN_PASSWORD` ออกจาก `.env` ได้ ระบบใช้สองค่านี้สร้าง admin คนแรกแค่ตอนที่ยังไม่มีผู้ใช้เลยเท่านั้น
 
-> **Keep `TOTP_ENCRYPTION_KEY` in `.env` safe and never change it.** It encrypts everyone's 2FA secret. If it is lost or changed, nobody can complete 2FA. Recovering means deleting `state/users.json` and starting again from the first admin.
+> ⚠️ **เก็บค่า `TOTP_ENCRYPTION_KEY` ใน `.env` ให้ดี และห้ามเปลี่ยน** ค่านี้ใช้เข้ารหัส 2FA ของทุกคน ถ้าหายหรือถูกเปลี่ยน จะไม่มีใครผ่าน 2FA ได้อีก ต้องลบ `state/users.json` แล้วเริ่มใหม่ตั้งแต่ admin คนแรก
 
-Folders on the host:
+📁 **โฟลเดอร์บนเครื่อง**
 
-| Folder | Contents |
-|--------|----------|
-| `data/` | Your corpus (JSON). Mounted writable, because **Manage Data** saves here |
-| `papers/` | Optional PDFs (read-only) |
-| `state/` | Users (with 2FA state), the session secret, and the audit log |
+| โฟลเดอร์ | เก็บอะไร |
+|----------|----------|
+| `data/` | ข้อมูลงาน review (JSON) หน้า **Manage Data** จะบันทึกลงที่นี่ |
+| `papers/` | ไฟล์ PDF ของเปเปอร์ (ไม่บังคับ) |
+| `state/` | บัญชีผู้ใช้ สถานะ 2FA session และ audit log |
 
-The container runs as an unprivileged user (uid 1000). On Linux, `data/` and `state/` must be writable by that uid: run `sudo chown -R 1000:1000 data state` if needed.
+- 🐧 **บน Linux:** container ไม่ได้รันเป็น root แต่รันเป็น uid 1000 จึงต้องให้ uid นี้เขียน `data/` กับ `state/` ได้ ถ้าเขียนไม่ได้ ให้รัน `sudo chown -R 1000:1000 data state`
+- 🔄 **อัปเดตเวอร์ชัน:** `git pull` แล้ว `docker compose up -d --build` ข้อมูลใน `data/` และ `state/` ไม่หาย
+- 🌐 **เปิดให้คนอื่นเข้าผ่านเน็ต:** วาง reverse proxy ที่ทำ HTTPS ไว้ข้างหน้า เช่น Caddy, nginx หรือ Traefik แล้วตั้ง `COOKIE_SECURE=true` และ `TRUST_PROXY=1` ใน `.env` ถ้าไม่มี proxy ให้ปล่อย `TRUST_PROXY=false` ไว้ ค่าอื่นๆ ดูได้ที่ [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
-To update after pulling new code, run `docker compose up -d --build`. Your `data/` and `state/` folders are not affected. Released versions are also published as images, `ghcr.io/<owner>/literature-review-tracker:<version>` (see [CI-CD.md](CI-CD.md)).
+---
 
-### Behind HTTPS
+## 🔐 การล็อกอินและ 2FA
 
-For anything beyond your own machine, put a reverse proxy (Caddy, nginx, Traefik) in front and set `COOKIE_SECURE=true` and `TRUST_PROXY=1` in `.env`. Without a proxy, leave `TRUST_PROXY` at `false`, or clients could fake their IP address and get around the rate limits.
+ทุกบัญชี **ต้องใช้ 2FA** และไม่มีใครปิดได้ แม้แต่ admin
 
-## Local development
+1. 🔑 **ใส่รหัสผ่าน:** รหัสผ่านถูกอย่างเดียวยังเข้าระบบไม่ได้
+2. 📷 **ล็อกอินครั้งแรก** (หรือหลัง admin รีเซ็ต 2FA ให้): สแกน QR code ด้วยแอป authenticator แล้วกรอกโค้ด 6 หลัก จากนั้นจะได้ **backup code 10 ชุด** ซึ่งจะแสดงครั้งเดียวเท่านั้น ให้เก็บไว้ให้ดี
+3. 🔢 **ล็อกอินครั้งต่อไป:** กรอกโค้ด 6 หลักจากแอป แต่ละโค้ดใช้ได้ครั้งเดียว ถ้าทำมือถือหายให้ใช้ backup code แทน แต่ละชุดก็ใช้ได้ครั้งเดียวเช่นกัน
+4. 🔁 **รหัสผ่านชั่วคราว:** บัญชีที่ admin สร้างหรือรีเซ็ตรหัสให้ ต้องตั้งรหัสผ่านใหม่ของตัวเองทันทีหลังล็อกอิน
 
-You need Node.js 22.12+ (24 LTS recommended).
+👤 กดที่อีเมลของคุณมุมล่างของแถบซ้าย จะเปิดหน้าบัญชี ใช้เปลี่ยนรหัสผ่านและสร้าง backup code ชุดใหม่ได้
 
-```bash
-npm install
-bash scripts/generate-secrets.sh   # .env with TOTP_ENCRYPTION_KEY and a first admin
-npm run dev:server                 # API on :4000 (reads .env)
-npm run dev                        # UI on :5173
-npm run build && npm test          # end-to-end smoke test, the same one CI runs
-npm run test:ui                    # browser test (needs Chrome or Edge)
-```
+🆘 **ทำมือถือหายและไม่มี backup code เหลือ:** ให้ admin กด **Reset 2FA** ให้ แล้วตั้งใหม่ตอนล็อกอินครั้งถัดไป
 
-### Test accounts (development only)
+🛡️ **การป้องกันอื่นๆ**
 
-When the server runs outside production (`npm run dev:server`, `NODE_ENV` not `production`), it creates one account per role so you can try every permission right away:
+- **ล็อกบัญชี:** ใส่รหัสผ่านผิด 5 ครั้ง บัญชีจะถูกล็อก 15 นาที admin ปลดล็อกได้ด้วยการรีเซ็ตรหัสผ่าน
+- **จำกัดจำนวนครั้ง:** การล็อกอินและการกรอกโค้ด 2FA ถูกจำกัดจำนวนครั้งต่อ IP
+- **ออกจากระบบทันที:** ถ้าเปลี่ยน role ปิดบัญชี หรือรีเซ็ตรหัสผ่าน/2FA ของใคร คนนั้นจะถูกออกจากระบบทุกเครื่องทันที
 
-| Role | Email | Password | Override in `.env` |
-|------|-------|----------|-------------------|
-| admin | `admin@example.com` | `Admin@12345` | `ADMIN_EMAIL`, `ADMIN_PASSWORD` (only used while no users exist) |
-| manager | `manager@example.com` | `Manager@12345` | `TEST_MANAGER_EMAIL`, `TEST_MANAGER_PASSWORD` |
-| user | `user@example.com` | `User@12345` | `TEST_USER_EMAIL`, `TEST_USER_PASSWORD` |
+---
 
-Each one still has to set up 2FA on first sign-in. `SEED_TEST_USERS=false` turns them off. **These accounts are never created in production.** The Docker image runs with `NODE_ENV=production`, so a real install needs `ADMIN_EMAIL` and `ADMIN_PASSWORD` (which `scripts/generate-secrets.sh` fills with a random password).
+## 👥 บทบาทผู้ใช้ (Roles)
 
-## Sign-in and two-factor authentication
+| สิทธิ์ | admin | manager | user |
+|--------|:-----:|:-------:|:----:|
+| 👀 ดูทุกหน้า และดาวน์โหลด PDF | ✅ | ✅ | ✅ |
+| ✏️ แก้ไขข้อมูล (**Manage Data**) | ✅ | ✅ | |
+| 📋 ดูรายชื่อผู้ใช้ (**Users**) | ✅ | ✅ | |
+| ⚙️ เพิ่ม/เปลี่ยน role/ปิดบัญชี/รีเซ็ตรหัสผ่านหรือ 2FA/ลบผู้ใช้ | ✅ | | |
+| 📜 ดู **Audit Log** | ✅ | | |
 
-Two-factor authentication (2FA) is required for **every** account, and nobody can switch it off:
+- 👑 **admin:** ดูแลระบบและจัดการบัญชีผู้ใช้
+- 🧑‍🔬 **manager:** ผู้ร่วมวิจัยหรือผู้ช่วยวิจัยที่ช่วยกรอกข้อมูล
+- 👓 **user:** ดูอย่างเดียว เช่น อาจารย์ที่ปรึกษาหรือกรรมการสอบ
 
-1. **Password.** A correct password alone never opens a session.
-2. **First sign-in** (or after an admin resets your 2FA): scan the QR code with an authenticator app and enter the 6-digit code. You then get **10 backup codes**. Save them, because they are shown only once.
-3. **Every later sign-in:** enter the current 6-digit code from the app. A code can't be used twice. If you lost your phone, use a backup code instead; each one works once.
-4. **Temporary passwords:** people whose account was created or reset by an admin must choose their own password right after signing in.
+---
 
-From the account panel (click your email at the bottom of the sidebar) you can change your password and create a new set of backup codes. If you lose both your phone and your backup codes, ask an admin to **reset your 2FA**, and your next sign-in starts the setup again.
+## 🧭 ขั้นตอนการทำ review
 
-Other protections:
+แอปออกแบบมาตามขั้นตอนข้างล่างนี้ ทุกขั้นตอนทำในหน้า **🛠️ Manage Data** (อยู่ในหัวข้อ *Views* ที่แถบซ้าย) ต้องเป็น admin หรือ manager ถึงจะเห็นหน้านี้
 
-- **Lockout:** an account locks for 15 minutes after 5 wrong passwords. An admin password reset unlocks it.
-- **Rate limits:** sign-in and 2FA requests are limited per IP.
-- **Immediate sign-out:** changing someone's role, disabling the account, or resetting their password or 2FA signs them out everywhere at once.
+### 1️⃣ ตั้งค่าแอป
 
-## Users and roles
+ตอนติดตั้งเสร็จ แอปจะมีข้อมูลตัวอย่างเรื่อง time-series forecasting มาให้ จะได้เห็นว่าแต่ละหน้าหน้าตาเป็นอย่างไร ลองดูให้ทั่วแล้วค่อย [ล้างข้อมูลตัวอย่าง](#-เริ่มจากคลังว่าง)
 
-| Permission | admin | manager | user |
-|------------|:-----:|:-------:|:----:|
-| Read every view, download PDFs | ✓ | ✓ | ✓ |
-| Edit data (**Manage Data**) | ✓ | ✓ | |
-| See the user list (**Users**) | ✓ | ✓ | |
-| Add, change role, disable, reset password / 2FA, delete users | ✓ | | |
-| Read the **Audit Log** | ✓ | | |
+ไปที่ **Manage Data → Settings** ตั้งชื่อแอป (เช่นชื่อวิทยานิพนธ์) ไอคอน และคำอธิบายสั้นๆ
 
-- **admin** – runs the app and manages accounts
-- **manager** – a co-researcher or research assistant who maintains the data
-- **user** – read-only, e.g. a supervisor or examiner
+### 2️⃣ กำหนด domain
 
-Roles are defined in one place, [server/permissions.js](server/permissions.js), and the server checks them on every request. Admins can't remove their own admin role or disable or delete themselves, and at least one active admin always remains.
+*domain* คือสายงานวิจัยหนึ่งเส้นที่ review ต้องครอบคลุม เช่น "Recurrent sequence models" หรือ "Reinforcement learning for control" งาน review ส่วนใหญ่มีประมาณ 3–6 domain
 
-## Starting from an empty corpus
+ไปที่ **Manage Data → Domains** แล้วเพิ่มทีละ domain:
 
-Delete the example entries in **Manage Data**: papers first, then domains. Or reset the files directly:
+- 🔢 **Domain number:** แสดงเป็น D1, D2, …
+- 🏷️ **ชื่อย่อ / ชื่อเต็ม / คำอธิบาย**
+- 🎯 **Target paper count:** จำนวนเปเปอร์ที่ตั้งเป้าไว้ แถบความคืบหน้าจะวัดเทียบกับตัวเลขนี้
+- 🔎 **Search keywords:** คำค้นที่ใช้จริงใน Scopus, Google Scholar ฯลฯ จดไว้เพื่อให้คนอื่นค้นซ้ำแล้วได้ผลเหมือนกัน
+- 🎨 **Slug และสี:** slug เป็นชื่อโฟลเดอร์เก็บ PDF ของ domain นั้นด้วย
+
+### 3️⃣ บันทึกทุกเปเปอร์ที่อ่าน
+
+อ่านแต่ละเปเปอร์แล้วตัดสินใจหนึ่งอย่าง:
+
+- ✅ **เอาเข้าคลัง:** ไปที่ **Manage Data → Papers → + Add paper** เลือก domain ให้คะแนนความเกี่ยวข้อง 1–10 แล้วกรอกโน้ต 4 ช่อง
+  - **What:** เปเปอร์นี้ทำอะไร สรุปใน 1–2 ประโยค
+  - **How:** ใช้วิธีอะไร
+  - **Results:** ได้ผลอะไร
+  - **Usage:** จะอ้างอิงตรงไหนในเล่ม และเพราะอะไร
+
+  ใส่ tag เป็นป้ายสั้นๆ ได้ เช่น "Baseline model" (ด้านบวก) หรือ "Not time-series data" (ข้อควรระวัง) ถ้าเป็น preprint หรือหลักฐานยังไม่แน่น ให้ติ๊ก ⚠️ **Cite with caution**
+- ❌ **ไม่เอา:** ไปที่ **Manage Data → Rejected → + Add rejected paper** บันทึก**เหตุผล**สั้นๆ และ **batch** คือรอบการค้นที่เจอเปเปอร์นี้
+  - ถ้าจะถอนเปเปอร์ที่เคยเอาเข้าคลังไปแล้ว: ลบออกจาก Papers ก่อน แล้วเพิ่มที่นี่โดยเลือกสถานะ `removed` และใส่เลขเดิมของมันในช่อง **Freed paper number**
+
+ตัวเลขที่แถบซ้ายจะอัปเดตตามไปเรื่อยๆ: อ่านทั้งหมดกี่เรื่อง เข้าคลังกี่เรื่อง ไม่เอากี่เรื่อง และถอนออกทีหลังกี่เรื่อง
+
+### 4️⃣ ให้คะแนนตาม rubric
+
+ไปที่ **Manage Data → Comparison** ตั้งชื่อ **เกณฑ์ (dimension)** ที่จะใช้ประเมินทุกเปเปอร์ เช่น "ใช้ข้อมูลจริง" หรือ "ประเมินการตัดสินใจ" แล้วเลือก domain แล้วตั้งสถานะของแต่ละเปเปอร์ในแต่ละเกณฑ์:
+
+| สถานะ | ความหมาย |
+|-------|----------|
+| ✓ Yes | ครอบคลุมเต็มที่ |
+| ◑ Partial | ครอบคลุมบางส่วน |
+| · Note | เกี่ยวข้อง มีหมายเหตุ |
+| — No | ไม่ครอบคลุม (ค่าเริ่มต้น) |
+
+แต่ละช่องใส่โน้ตสั้นๆ อธิบายได้ หน้า **📊 Comparison** จะแสดงเป็นตารางแยกตาม domain แล้ว export เป็น Excel หรือรูปภาพไปใส่บท literature review ได้เลย
+
+### 5️⃣ บันทึก research gap
+
+ตาราง rubric จะช่วยให้เห็นว่ายังมีอะไรที่งานวิจัยเดิมยังไม่ได้ทำ ไปที่ **Manage Data → Gaps** แล้วบันทึกแต่ละ gap พร้อมข้อมูลเหล่านี้:
+
+- ระดับความสำคัญ
+- สถานะ (`open` / `partial` / `closed`)
+- หลักฐาน (บรรทัดละหนึ่งเปเปอร์)
+- โอกาสที่งานของคุณจะเข้าไปเติมช่องว่างนี้
+- คำค้นที่ควรหาต่อ
+
+เมื่อเจอเปเปอร์ใหม่ที่ปิด gap ได้ ก็ค่อยเปลี่ยนสถานะเป็น `closed`
+
+### 6️⃣ เตรียมประโยคอ้างอิง
+
+ไปที่ **Manage Data → Citations** แล้วผูกประโยคอ้างอิงที่เขียนไว้กับเปเปอร์แต่ละเรื่อง พร้อมระบุตำแหน่งที่จะใช้ (เช่น "บทที่ 2: งานวิจัยที่เกี่ยวข้อง") และป้ายสั้นๆ หน้า **✍️ Citations** จะเรียงให้ตามตำแหน่งในเล่ม และมีปุ่ม copy ทุกอัน
+
+### 7️⃣ วาด research pipeline
+
+ไปที่ **Manage Data → Pipeline** แล้วอธิบายว่าแต่ละ domain ต่อเข้าเป็นวิธีวิจัยของคุณอย่างไรทีละขั้น เช่นขั้น 1, 2, 3 แต่ละขั้นผูกกับ domain และเปเปอร์หลัก ถ้ามีเรื่องที่ครอบคลุมทุกขั้น เช่น การประเมินผลหรือจริยธรรม ให้ใช้ขั้น `0` ส่วนหัวข้อของหน้านี้ตั้งได้ที่ **Settings**
+
+### 8️⃣ เอาไปใช้เขียนเล่ม
+
+- 📤 Export ตารางเปรียบเทียบจาก **Comparison** (`.xlsx`, PNG, JPG) และรายชื่อเปเปอร์จาก **Domain Tables** (`.xlsx`)
+- 📋 ก๊อปประโยคอ้างอิงจาก **Citations**
+- 📈 ใช้ **Charts** และตัวเลขเปเปอร์ที่คัดออก ตอนอธิบายกระบวนการค้นและคัดเลือกเปเปอร์
+
+---
+
+## 📎 แนบไฟล์ PDF (ไม่บังคับ)
+
+วางไฟล์ไว้ที่ `papers/<slug ของ domain>/D<เลข domain>-<เลขเปเปอร์>-<ชื่ออะไรก็ได้>.pdf`
+
+ตัวอย่าง: `papers/domain-1-sequence-models/D1-01-lstm.pdf`
+
+เลขเปเปอร์ต้องตรงกับเลขในคลัง ผู้ใช้ที่ล็อกอินแล้วจะเห็นปุ่มดาวน์โหลดที่เปเปอร์นั้น ไฟล์ใหม่จะขึ้นเมื่อรีเฟรชหน้า
+
+## 🧹 เริ่มจากคลังว่าง
+
+ลบข้อมูลตัวอย่างใน **Manage Data** ได้เลย ให้ลบ papers ก่อน แล้วค่อยลบ domains หรือจะล้างไฟล์ตรงๆ ก็ได้:
 
 ```bash
 for f in papers domains gaps pipeline rejected; do echo '[]' > data/$f.json; done
@@ -190,96 +197,29 @@ echo '{}' > data/citations.json
 echo '{ "dimensions": [], "cells": {} }' > data/comparison.json
 ```
 
-Then start again from [step 2](#2-define-your-domains).
+แล้วเริ่มใหม่ที่ขั้นที่ 2️⃣ กำหนด domain
 
-## Backups
+## 💾 สำรองข้อมูล
 
-Each save from **Manage Data** writes the whole file, and the version before it is kept next to it as `*.json.bak`, which gives you one step of undo. For real history, make `data/` a Git repository and commit it now and then.
-
-Back up `state/` too (users, 2FA state, audit log), along with **`TOTP_ENCRYPTION_KEY` from `.env`**. The users file is useless without the key that decrypts its 2FA secrets. Keep the two in separate places.
+- 📁 **`data/`:** ทุกครั้งที่บันทึกจาก **Manage Data** ระบบจะเก็บไฟล์เวอร์ชันก่อนหน้าไว้เป็น `*.json.bak` จึงย้อนกลับได้ 1 ครั้ง ถ้าอยากได้ประวัติย้อนหลังจริงๆ ให้ทำ `data/` เป็น Git repository แล้ว commit เป็นระยะ
+- 🔐 **`state/`:** เก็บผู้ใช้ สถานะ 2FA และ audit log ต้องสำรองไว้**คู่กับ `TOTP_ENCRYPTION_KEY` จาก `.env`** เพราะถ้าไม่มีกุญแจนี้ ไฟล์ผู้ใช้ก็ใช้ไม่ได้ ควรเก็บสองอย่างนี้แยกที่กัน
 
 ---
 
-## Data file reference
+## 📖 เอกสารเพิ่มเติม
 
-You don't need this if you use **Manage Data**. It's here if you'd rather edit the JSON by hand, import from another tool, or script changes. The server re-reads the files on every page load, so after editing one, refresh the browser. Only `domains.json` and `papers.json` are required. A missing file just leaves its view empty.
+| เอกสาร | สำหรับ |
+|--------|--------|
+| ⚙️ [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | ตัวแปร environment ทั้งหมด และการอัปเกรดจากเวอร์ชันเก่า |
+| 🗃️ [docs/DATA-FORMAT.md](docs/DATA-FORMAT.md) | รูปแบบไฟล์ JSON สำหรับคนที่อยากแก้ไฟล์เองหรือ import จากที่อื่น |
+| 👩‍💻 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | พัฒนาบนเครื่อง บัญชีทดสอบ การรันเทสต์ |
+| 🔄 [CI-CD.md](CI-CD.md) | กระบวนการ CI/CD และการสแกนความปลอดภัย |
+| 🛡️ [SECURITY.md](SECURITY.md) | การแจ้งช่องโหว่ |
 
-| File | Contents |
-|------|----------|
-| `config.json` | `title`, `subtitle`, `icon`, `pipelineTitle`, `pipelineSubtitle` |
-| `domains.json` | `id`, `slug`, `color`, `label`, `fullLabel`, `description`, `target`, `keywords[]` |
-| `papers.json` | Papers (format below) |
-| `comparison.json` | `dimensions[]` (rubric column names) plus `cells[domainId][paperId][dimensionIndex] = { status, note }`. `status` is `yes`, `partial`, `note`, or `no`. A missing cell means `no` |
-| `gaps.json` | `id`, `title`, `priority` (`critical`/`high`/`medium`/`low`), `status` (`open`/`partial`/`closed`), `description`, `evidence[]`, `opportunity`, `searchGuidance` |
-| `citations.json` | Keyed by paper id: `{ where, label, text }` |
-| `pipeline.json` | `step` (`0` = cross-cutting), `label`, `sublabel`, `color`, `domain`, `papers[]`, `note` |
-| `rejected.json` | `id`, `status` (`rejected`/`removed`), `batch`, `title`, `authors`, `venue`, `year`, `reason`, optional `freedNumber` |
+## 🙏 ผู้พัฒนา
 
-A paper looks like this:
+พัฒนาโดย **Wanut Padee**
 
-```json
-{
-  "id": 1, "num": "01", "domain": 1, "score": 9, "caution": false,
-  "title": "Long Short-Term Memory",
-  "authors": "Hochreiter & Schmidhuber",
-  "venue": "Neural Computation", "year": 1997,
-  "doi": "10.1162/neco.1997.9.8.1735",
-  "what": "...", "how": "...", "results": "...", "usage": "...",
-  "tags": [{ "label": "Foundational", "type": "yes" }]
-}
-```
-
-- `id` is unique across all domains. `num` is `id` padded to two digits.
-- `score` is a relevance score from 1 to 10.
-- Each tag's `type` is `yes` (positive), `warn` (warning), or empty (neutral).
-- A paper's domain comes from its `domain` field, so `domains.json` doesn't keep its own list of papers.
-
-Saving from **Manage Data** checks the whole file before writing. Examples: ids must be unique, scores must be from 1 to 10, every paper's domain must exist, and you can't delete a domain that still has papers. Deleting a paper also removes its citation, comparison scores, and pipeline references.
-
-### PDFs (optional)
-
-Put PDFs in `papers/<domain slug>/D<domain>-<NN>-<anything>.pdf`, for example `papers/domain-1-sequence-models/D1-01-lstm.pdf`. `NN` must match the paper's `id`. Signed-in users then get a download button on that paper. New files show up on the next page load.
-
-## Configuration
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `TOTP_ENCRYPTION_KEY` | — (**required**) | 64 hex characters that encrypt users' 2FA secrets. `scripts/generate-secrets.sh` creates one |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | — | Create the first admin on first start |
-| `PORT` | `4000` | HTTP port |
-| `DATA_DIR` | `./data` | Folder with the JSON files (must be writable to use **Manage Data**) |
-| `PAPERS_DIR` | `./papers` | Folder with the PDFs |
-| `STATE_DIR` | `./state` | Users, session secret, audit log |
-| `COOKIE_SECURE` | `false` | `true` when served over HTTPS (also turns on HSTS) |
-| `TRUST_PROXY` | `false` | Number of reverse-proxy hops to trust for the client IP (e.g. `1`). Leave `false` without a proxy |
-| `TWOFA_ISSUER` | `Literature Review Tracker` | Name shown in the authenticator app |
-| `SESSION_SECRET` | generated | Fixed session secret (32+ characters). Otherwise one is generated into `state/` |
-| `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MINUTES` | `5`, `15` | Account lockout |
-| `RATE_LIMIT_LOGIN`, `RATE_LIMIT_2FA` | `20`, `10` | Requests per IP per 15 min (sign-in) and per 5 min (2FA) |
-| `RATE_LIMIT_API` | `600` | All requests per IP per minute |
-| `SEED_TEST_USERS` | `true` outside production | Create the default test accounts (see [Test accounts](#test-accounts-development-only)) |
-
-Sessions are saved in `state/sessions.json` (session ids only as hashes), so restarting the app doesn't sign anyone out.
-
-### Upgrading from older versions
-
-- **Users from before 2FA** were stored as `APP_USER_*` lines in `AUTH_ENV_PATH` (`state/users.env` in Docker). On start they are moved into `state/users.json` with their passwords and roles unchanged, and each person sets up 2FA at their next sign-in.
-- **Papers from the old "+ Add Paper" form** in `custom-papers.json` (`CUSTOM_PAPERS_PATH`) are moved into `data/papers.json`. A paper whose id is already taken gets a new number, and the old file is renamed to `custom-papers.json.migrated`.
-
-## Development process
-
-Every push and pull request runs CI:
-
-- `npm audit` and the build
-- the end-to-end smoke test, run both directly and against the Docker image
-- Snyk scans of dependencies, source code, and the container image
-
-Release tags (`vX.Y.Z`) publish an image to GitHub Container Registry. See [CI-CD.md](CI-CD.md).
-
-## Credits
-
-Developed by Wanut Padee.
-
-## License
+## 📄 License
 
 MIT
