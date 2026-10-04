@@ -97,7 +97,7 @@ In **Manage Data → Pipeline**, describe how the domains feed into your method,
 You need [Docker](https://docs.docker.com/get-docker/) with Docker Compose, and an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy, 1Password, …).
 
 ```bash
-git clone <this repo> && cd literature-review-tracker
+git clone https://github.com/nuttkku/literature-review-tracker.git && cd literature-review-tracker
 bash scripts/generate-secrets.sh   # creates .env with a random 2FA encryption key and first-admin password
 docker compose up -d --build
 ```
@@ -133,6 +133,18 @@ npm run dev:server                 # API on :4000 (reads .env)
 npm run dev                        # UI on :5173
 npm run build && npm test          # end-to-end smoke test, the same one CI runs
 ```
+
+### Test accounts (development only)
+
+When the server runs outside production (`npm run dev:server`, `NODE_ENV` not `production`), it creates one account per role so you can try every permission right away:
+
+| Role | Email | Password | Override in `.env` |
+|------|-------|----------|-------------------|
+| admin | `admin@example.com` | `Admin@12345` | `ADMIN_EMAIL`, `ADMIN_PASSWORD` (only used while no users exist) |
+| manager | `manager@example.com` | `Manager@12345` | `TEST_MANAGER_EMAIL`, `TEST_MANAGER_PASSWORD` |
+| user | `user@example.com` | `User@12345` | `TEST_USER_EMAIL`, `TEST_USER_PASSWORD` |
+
+Each one still has to set up 2FA on first sign-in. `SEED_TEST_USERS=false` turns them off. **These accounts are never created in production.** The Docker image runs with `NODE_ENV=production`, so a real install needs `ADMIN_EMAIL` and `ADMIN_PASSWORD` (which `scripts/generate-secrets.sh` fills with a random password).
 
 ## Sign-in and two-factor authentication
 
@@ -244,6 +256,7 @@ Put PDFs in `papers/<domain slug>/D<domain>-<NN>-<anything>.pdf`, for example `p
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MINUTES` | `5`, `15` | Account lockout |
 | `RATE_LIMIT_LOGIN`, `RATE_LIMIT_2FA` | `20`, `10` | Requests per IP per 15 min (sign-in) and per 5 min (2FA) |
 | `RATE_LIMIT_API` | `600` | All requests per IP per minute |
+| `SEED_TEST_USERS` | `true` outside production | Create the default test accounts (see [Test accounts](#test-accounts-development-only)) |
 
 Sessions are kept in memory, so restarting the app signs everyone out.
 

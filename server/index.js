@@ -4,7 +4,7 @@ import helmet from 'helmet'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { config, sessionSecret } from './config.js'
-import { loadUsers, bootstrapAdmin } from './users.js'
+import { loadUsers, bootstrapAdmin, seedTestUsers } from './users.js'
 import { requireAuth, requirePermission, sameOrigin, apiLimiter } from './middleware.js'
 import { recordEvent } from './audit.js'
 import authRoutes from './routes/auth.js'
@@ -21,6 +21,8 @@ if (migratedUsers) console.log(`Moved ${migratedUsers} users from ${config.legac
 const admin = await bootstrapAdmin()
 if (admin) console.log(`Created first admin account: ${admin}`)
 else console.log(`Loaded ${count} users`)
+const testUsers = await seedTestUsers()
+if (testUsers.length) console.warn(`Development mode: created test accounts ${testUsers.join(', ')}. They are never created when NODE_ENV=production.`)
 loadData() // fail fast on malformed JSON instead of on the first request
 console.log(`Loaded corpus data from ${DATA_DIR}`)
 const migratedPapers = migrateCustomPapers()

@@ -79,10 +79,27 @@ export function loadUsers() {
   return { count: users.length, migrated }
 }
 
-// First run: with no users yet, create an admin from ADMIN_EMAIL / ADMIN_PASSWORD.
+// Outside production (NODE_ENV !== 'production'), ready-made accounts for every role so sign-in,
+// 2FA and RBAC can be tried straight away. Each can be overridden in .env. They still have to set
+// up 2FA like any account. Never created in production, which is what the Docker image runs as,
+// so a default password can't end up on a real server.
+export const DEV_ACCOUNTS = [
+  { role: 'admin', emailVar: 'ADMIN_EMAIL', passwordVar: 'ADMIN_PASSWORD', email: 'admin@example.com', password: 'Admin@12345' },
+  { role: 'manager', emailVar: 'TEST_MANAGER_EMAIL', passwordVar: 'TEST_MANAGER_PASSWORD', email: 'manager@example.com', password: 'Manager@12345' },
+  { role: 'user', emailVar: 'TEST_USER_EMAIL', passwordVar: 'TEST_USER_PASSWORD', email: 'user@example.com', password: 'User@12345' },
+]
+
+const devAccountsEnabled = () => !config.isProduction && process.env.SEED_TEST_USERS !== 'false'
+
+// First run: with no users yet, create an admin from ADMIN_EMAIL / ADMIN_PASSWORD
+// (or, outside production, from the default admin above).
 export async function bootstrapAdmin() {
   if (users.length) return null
-  const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env
+  let { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env
+  if ((!ADMIN_EMAIL || !ADMIN_PASSWORD) && devAccountsEnabled()) {
+    ADMIN_EMAIL ||= DEV_ACCOUNTS[0].email
+    ADMIN_PASSWORD ||= DEV_ACCOUNTS[0].password
+  }
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
     console.warn('No users exist yet. Set ADMIN_EMAIL and ADMIN_PASSWORD to create the first admin.')
     return null
@@ -91,6 +108,23 @@ export async function bootstrapAdmin() {
   users.push(newUser({ email: ADMIN_EMAIL, passwordHash: await hashSecret(ADMIN_PASSWORD), role: 'admin' }))
   persist()
   return ADMIN_EMAIL
+}
+
+// Development only: make sure the manager and user test accounts exist (created once, never
+// overwritten). Unlike admin-created accounts they skip the forced password change, for quick testing.
+export async function seedTestUsers() {
+  if (!devAccountsEnabled()) return []
+  const created = []
+  for (const a of DEV_ACCOUNTS.slice(1)) {
+    const email = process.env[a.emailVar] || a.email
+    const password = process.env[a.passwordVar] || a.password
+    if (findByEmail(email)) continue
+    validatePassword(password)
+    users.push(newUser({ email, passwordHash: await hashSecret(password), role: a.role }))
+    created.push(`${email} (${a.role})`)
+  }
+  if (created.length) persist()
+  return created
 }
 
 export function validatePassword(password) {

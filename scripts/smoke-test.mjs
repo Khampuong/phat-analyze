@@ -133,6 +133,7 @@ async function startServer() {
       RATE_LIMIT_LOGIN: '500',
       RATE_LIMIT_2FA: '500',
       RATE_LIMIT_API: '5000',
+      SEED_TEST_USERS: 'false', // the test creates its own manager/user accounts
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
