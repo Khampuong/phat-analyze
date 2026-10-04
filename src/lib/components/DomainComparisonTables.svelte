@@ -1,5 +1,5 @@
 <script>
-  import * as XLSX from 'xlsx'
+  import { downloadWorkbook, sheetName } from '../xlsx.js'
   import { toPng, toJpeg } from 'html-to-image'
 
   export let papers
@@ -94,39 +94,14 @@
     ]
   }
 
-  function sheetName(label, prefix) {
-    return `${prefix} ${label}`.replace(/[:\\/?*[\]]/g, '-').slice(0, 31)
-  }
-
-  function autoWidth(aoa) {
-    const widths = []
-    for (const row of aoa) {
-      row.forEach((cell, i) => {
-        const len = String(cell ?? '').length
-        widths[i] = Math.min(60, Math.max(widths[i] || 12, len + 2))
-      })
-    }
-    return widths.map(w => ({ wch: w }))
-  }
-
   function exportDomain(d) {
-    const wb = XLSX.utils.book_new()
-    const aoa = domainAoa(d)
-    const ws = XLSX.utils.aoa_to_sheet(aoa)
-    ws['!cols'] = autoWidth(aoa)
-    XLSX.utils.book_append_sheet(wb, ws, sheetName(d.label, `D${d.id}`))
-    XLSX.writeFile(wb, `comparison-domain-${d.id}-${d.slug.replace(/^domain-\d+-/, '')}.xlsx`)
+    downloadWorkbook(`comparison-domain-${d.id}-${d.slug.replace(/^domain-\d+-/, '')}.xlsx`, [
+      { name: sheetName(d.label, `D${d.id}`), rows: domainAoa(d) },
+    ])
   }
 
   function exportAll() {
-    const wb = XLSX.utils.book_new()
-    for (const d of byDomain) {
-      const aoa = domainAoa(d)
-      const ws = XLSX.utils.aoa_to_sheet(aoa)
-      ws['!cols'] = autoWidth(aoa)
-      XLSX.utils.book_append_sheet(wb, ws, sheetName(d.label, `D${d.id}`))
-    }
-    XLSX.writeFile(wb, 'comparison-tables-by-domain.xlsx')
+    downloadWorkbook('comparison-tables-by-domain.xlsx', byDomain.map(d => ({ name: sheetName(d.label, `D${d.id}`), rows: domainAoa(d) })))
   }
 </script>
 

@@ -4,3 +4,7 @@ dist
 .env
 state
 papers
+scripts
+.github
+*.md
+custom-papers.json*

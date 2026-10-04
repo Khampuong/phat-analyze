@@ -1,25 +1,11 @@
 <script>
-  import { createEventDispatcher, onMount } from 'svelte'
-  import { listUsers, createUser, deleteUser, changePassword } from '../auth.js'
+  import { createEventDispatcher } from 'svelte'
+  import { changePassword, regenerateBackupCodes } from '../auth.js'
+  import BackupCodes from './BackupCodes.svelte'
 
   export let user
 
   const dispatch = createEventDispatcher()
-
-  let users = []
-  let usersError = ''
-  let confirmingEmail = null
-  let deleteError = ''
-  let deletingEmail = null
-
-  $: adminCount = users.filter((u) => u.role === 'admin').length
-
-  let newEmail = ''
-  let newPassword = ''
-  let newRole = 'user'
-  let createError = ''
-  let createOk = ''
-  let creating = false
 
   let currentPassword = ''
   let nextPassword = ''
@@ -28,57 +14,10 @@
   let pwOk = ''
   let pwSaving = false
 
-  async function refreshUsers() {
-    if (user.role !== 'admin') return
-    try {
-      users = await listUsers()
-    } catch (e) {
-      usersError = e.message
-    }
-  }
-
-  onMount(refreshUsers)
-
-  async function submitCreate() {
-    createError = ''
-    createOk = ''
-    creating = true
-    try {
-      await createUser(newEmail, newPassword, newRole)
-      createOk = `Created ${newEmail}`
-      newEmail = ''
-      newPassword = ''
-      newRole = 'user'
-      await refreshUsers()
-    } catch (e) {
-      createError = e.message
-    } finally {
-      creating = false
-    }
-  }
-
-  function askDelete(email) {
-    deleteError = ''
-    confirmingEmail = email
-  }
-
-  function cancelDelete() {
-    confirmingEmail = null
-  }
-
-  async function confirmDelete(email) {
-    deleteError = ''
-    deletingEmail = email
-    try {
-      await deleteUser(email)
-      confirmingEmail = null
-      await refreshUsers()
-    } catch (e) {
-      deleteError = e.message
-    } finally {
-      deletingEmail = null
-    }
-  }
+  let newCodes = []
+  let codesError = ''
+  let confirmingCodes = false
+  let codesSaving = false
 
   async function submitPasswordChange() {
     pwError = ''
@@ -89,15 +28,30 @@
     }
     pwSaving = true
     try {
-      await changePassword(currentPassword, nextPassword)
-      pwOk = 'Password updated'
+      const updated = await changePassword(currentPassword, nextPassword)
+      pwOk = 'Password updated. Your other sessions were signed out.'
       currentPassword = ''
       nextPassword = ''
       confirmPassword = ''
+      dispatch('updated', updated)
     } catch (e) {
       pwError = e.message
     } finally {
       pwSaving = false
+    }
+  }
+
+  async function makeNewCodes() {
+    codesError = ''
+    codesSaving = true
+    try {
+      newCodes = (await regenerateBackupCodes()).backupCodes
+      confirmingCodes = false
+      dispatch('updated', { ...user, backupCodesRemaining: newCodes.length })
+    } catch (e) {
+      codesError = e.message
+    } finally {
+      codesSaving = false
     }
   }
 </script>
@@ -110,7 +64,7 @@
   <div class="panel">
     <div class="panel-header">
       <h2>Account</h2>
-      <button class="close-btn" on:click={() => dispatch('close')}>✕</button>
+      <button class="close-btn" on:click={() => dispatch('close')} aria-label="Close">✕</button>
     </div>
 
     <section class="section">
@@ -122,66 +76,38 @@
     </section>
 
     <section class="section">
+      <div class="section-title">Two-factor authentication</div>
+      <div class="you-row">
+        <span>✓ On (authenticator app)</span>
+        <span class="muted">{user.backupCodesRemaining} backup codes left</span>
+      </div>
+      {#if newCodes.length}
+        <p class="hint">Your new backup codes. The old ones no longer work. Save these now; they won't be shown again.</p>
+        <BackupCodes codes={newCodes} />
+      {:else if confirmingCodes}
+        <p class="hint">This replaces all your current backup codes.</p>
+        <div class="row">
+          <button class="btn" on:click={makeNewCodes} disabled={codesSaving}>{codesSaving ? 'Creating…' : 'Create new codes'}</button>
+          <button class="btn ghost" on:click={() => (confirmingCodes = false)}>Cancel</button>
+        </div>
+      {:else}
+        <button class="btn ghost" on:click={() => (confirmingCodes = true)}>New backup codes</button>
+      {/if}
+      {#if codesError}<div class="msg error">{codesError}</div>{/if}
+      <p class="hint">Lost your authenticator app and your backup codes? Ask an admin to reset your 2FA, then set it up again at your next sign-in.</p>
+    </section>
+
+    <section class="section">
       <div class="section-title">Change my password</div>
       <form class="stacked-form" on:submit|preventDefault={submitPasswordChange}>
-        <input type="password" placeholder="Current password" bind:value={currentPassword} autocomplete="current-password" required />
-        <input type="password" placeholder="New password (min 8 chars)" bind:value={nextPassword} autocomplete="new-password" required minlength="8" />
-        <input type="password" placeholder="Confirm new password" bind:value={confirmPassword} autocomplete="new-password" required minlength="8" />
+        <input type="password" placeholder="Current password" bind:value={currentPassword} autocomplete="current-password" required maxlength="128" />
+        <input type="password" placeholder="New password (8–128 characters)" bind:value={nextPassword} autocomplete="new-password" required minlength="8" maxlength="128" />
+        <input type="password" placeholder="Confirm new password" bind:value={confirmPassword} autocomplete="new-password" required minlength="8" maxlength="128" />
         {#if pwError}<div class="msg error">{pwError}</div>{/if}
         {#if pwOk}<div class="msg ok">{pwOk}</div>{/if}
         <button class="btn" type="submit" disabled={pwSaving}>{pwSaving ? 'Saving…' : 'Update password'}</button>
       </form>
     </section>
-
-    {#if user.role === 'admin'}
-      <section class="section">
-        <div class="section-title">Users ({users.length})</div>
-        {#if usersError}
-          <div class="msg error">{usersError}</div>
-        {:else}
-          <ul class="user-list">
-            {#each users as u}
-              {@const isSelf = u.email.toLowerCase() === user.email.toLowerCase()}
-              {@const isLastAdmin = u.role === 'admin' && adminCount <= 1}
-              <li>
-                <span class="you-email">{u.email}</span>
-                <span class="row-right">
-                  <span class="role-badge" class:admin={u.role === 'admin'}>{u.role}</span>
-                  {#if confirmingEmail === u.email}
-                    <button class="mini-btn danger" on:click={() => confirmDelete(u.email)} disabled={deletingEmail === u.email}>
-                      {deletingEmail === u.email ? '...' : 'Confirm'}
-                    </button>
-                    <button class="mini-btn" on:click={cancelDelete} disabled={deletingEmail === u.email}>Cancel</button>
-                  {:else if isSelf}
-                    <span class="mini-hint" title="You can't delete your own account while signed in">you</span>
-                  {:else if isLastAdmin}
-                    <span class="mini-hint" title="At least one admin must remain">last admin</span>
-                  {:else}
-                    <button class="mini-btn danger" on:click={() => askDelete(u.email)}>Delete</button>
-                  {/if}
-                </span>
-              </li>
-            {/each}
-          </ul>
-          {#if deleteError}<div class="msg error">{deleteError}</div>{/if}
-        {/if}
-      </section>
-
-      <section class="section">
-        <div class="section-title">Add a user</div>
-        <form class="stacked-form" on:submit|preventDefault={submitCreate}>
-          <input type="email" placeholder="Email" bind:value={newEmail} autocomplete="off" required />
-          <input type="password" placeholder="Password (min 8 chars)" bind:value={newPassword} autocomplete="new-password" required minlength="8" />
-          <select bind:value={newRole}>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-          {#if createError}<div class="msg error">{createError}</div>{/if}
-          {#if createOk}<div class="msg ok">{createOk}</div>{/if}
-          <button class="btn" type="submit" disabled={creating}>{creating ? 'Creating…' : 'Create user'}</button>
-        </form>
-      </section>
-    {/if}
   </div>
 </div>
 
@@ -204,14 +130,16 @@
 
   .section { display: flex; flex-direction: column; gap: 10px; }
   .section-title { font-size: 0.7rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .hint { font-size: 0.74rem; color: var(--text3); line-height: 1.5; }
+  .muted { color: var(--text3); font-size: 0.74rem; }
+  .row { display: flex; gap: 8px; }
 
-  .you-row, .user-list li {
-    display: flex; align-items: center; justify-content: space-between;
+  .you-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
     padding: 8px 10px; background: var(--surface2); border-radius: var(--radius);
-    font-size: 0.82rem;
+    font-size: 0.82rem; color: var(--text);
   }
-  .user-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-  .you-email { color: var(--text); }
+  .you-email { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
   .role-badge {
     font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
     padding: 2px 8px; border-radius: 99px; letter-spacing: 0.04em;
@@ -219,25 +147,13 @@
   }
   .role-badge.admin { background: var(--accent-glow); color: var(--accent); }
 
-  .row-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .mini-hint { font-size: 0.68rem; color: var(--text3); font-style: italic; white-space: nowrap; }
-  .mini-btn {
-    padding: 3px 8px; background: var(--surface3); border: 1px solid var(--border);
-    border-radius: var(--radius); color: var(--text2); font-size: 0.68rem; font-weight: 600;
-    cursor: pointer; transition: all var(--transition); white-space: nowrap;
-  }
-  .mini-btn:hover { border-color: var(--accent); color: var(--text); }
-  .mini-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-  .mini-btn.danger { color: var(--danger); border-color: var(--danger-border); background: var(--danger-bg); }
-  .mini-btn.danger:hover { filter: brightness(1.1); }
-
   .stacked-form { display: flex; flex-direction: column; gap: 8px; }
-  .stacked-form input, .stacked-form select {
+  .stacked-form input {
     padding: 8px 10px; background: var(--surface2);
     border: 1px solid var(--border); border-radius: var(--radius);
     color: var(--text); font-size: 0.83rem; outline: none;
   }
-  .stacked-form input:focus, .stacked-form select:focus { border-color: var(--accent); }
+  .stacked-form input:focus { border-color: var(--accent); }
 
   .msg { font-size: 0.76rem; padding: 6px 9px; border-radius: var(--radius); }
   .msg.error { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); }
@@ -250,4 +166,5 @@
   }
   .btn:hover { opacity: 0.9; }
   .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn.ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); font-weight: 500; }
 </style>

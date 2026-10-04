@@ -4,6 +4,8 @@ dist/
 .env
 app.env
 custom-papers.json
+users.json
+audit.log
 state/
 papers/*
 !papers/.gitkeep

@@ -11,7 +11,10 @@
   import Login from './lib/components/Login.svelte'
   import AccountPanel from './lib/components/AccountPanel.svelte'
   import ManageData from './lib/components/manage/ManageData.svelte'
-  import { me, logout, fetchAppData } from './lib/auth.js'
+  import UsersView from './lib/components/UsersView.svelte'
+  import AuditLogView from './lib/components/AuditLogView.svelte'
+  import ForcePasswordChange from './lib/components/ForcePasswordChange.svelte'
+  import { me, logout, fetchAppData, can } from './lib/auth.js'
 
   const buildDate = __BUILD_DATE__
 
@@ -23,7 +26,7 @@
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
+    try { localStorage.setItem('theme', theme) } catch {}
   }
 
   // The literature-review dataset is only ever fetched after a valid session exists —
@@ -35,14 +38,28 @@
   $: config = appData?.config ?? {}
   $: if (typeof document !== 'undefined' && config.title) document.title = config.title
 
+  async function loadAppData() {
+    if (!user || user.mustChangePassword) return
+    try {
+      appData = await fetchAppData()
+    } catch (e) {
+      if (e.status === 401) user = null // session ended (signed out elsewhere, disabled, 2FA reset)
+    }
+  }
+
   onMount(async () => {
     user = await me()
-    if (user) appData = await fetchAppData()
+    await loadAppData()
   })
 
   async function handleLoginSuccess(event) {
     user = event.detail
-    appData = await fetchAppData()
+    await loadAppData()
+  }
+
+  async function handlePasswordChanged(event) {
+    user = event.detail
+    await loadAppData()
   }
 
   async function handleLogout() {
@@ -52,7 +69,7 @@
   }
 
   async function refreshAppData() {
-    appData = await fetchAppData()
+    await loadAppData()
   }
 
   let activeDomain = 0
@@ -71,7 +88,13 @@
     { id: 'charts',   label: 'Charts' },
     { id: 'rejected', label: 'Rejected Papers' },
   ]
-  $: tabs = user?.role === 'admin' ? [...baseTabs, { id: 'manage', label: 'Manage Data' }] : baseTabs
+  // Tabs follow the RBAC permissions the server sends with the user (see server/permissions.js).
+  $: tabs = [
+    ...baseTabs,
+    ...(can(user, 'corpus:write') ? [{ id: 'manage', label: 'Manage Data' }] : []),
+    ...(can(user, 'users:read') ? [{ id: 'users', label: 'Users' }] : []),
+    ...(can(user, 'audit:read') ? [{ id: 'audit', label: 'Audit Log' }] : []),
+  ]
 
   $: filtered = papers
     .filter(p => activeDomain === 0 || p.domain === activeDomain)
@@ -108,6 +131,8 @@
   <div class="auth-loading">Loading…</div>
 {:else if user === null}
   <Login on:success={handleLoginSuccess} />
+{:else if user.mustChangePassword}
+  <ForcePasswordChange {user} on:changed={handlePasswordChanged} on:logout={handleLogout} />
 {:else if !appData}
   <div class="auth-loading">Loading data…</div>
 {:else}
@@ -205,6 +230,10 @@
             Corpus Charts
           {:else if activeTab === 'manage'}
             Manage Data
+          {:else if activeTab === 'users'}
+            Users
+          {:else if activeTab === 'audit'}
+            Audit Log
           {:else if activeTab === 'rejected'}
             Rejected Papers <span class="count-badge">{rejected.length}</span>
           {/if}
@@ -284,13 +313,19 @@
 
       {:else if activeTab === 'manage'}
         <ManageData {appData} refresh={refreshAppData} />
+
+      {:else if activeTab === 'users'}
+        <UsersView {user} canWrite={can(user, 'users:write')} />
+
+      {:else if activeTab === 'audit'}
+        <AuditLogView />
       {/if}
     </div>
   </main>
 </div>
 
 {#if showAccount}
-  <AccountPanel {user} on:close={() => (showAccount = false)} />
+  <AccountPanel {user} on:close={() => (showAccount = false)} on:updated={(e) => (user = e.detail)} />
 {/if}
 {/if}
 

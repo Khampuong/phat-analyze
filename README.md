@@ -2,7 +2,7 @@
 
 A self-hosted web app for running a literature review, built for thesis and dissertation work. You decide which research domains your review covers. Then you log every paper you read, either into the corpus with your notes or onto a rejected list with the reason. The app shows how well each domain is covered, where the gaps are, and gives you tables and sentences you can paste straight into your chapters.
 
-It runs on your own machine or server, needs a login, and keeps all your content in plain JSON files you own.
+It runs on your own machine or server and keeps all your content in plain JSON files you own. Every account signs in with a password **and** an authenticator app (two-factor authentication is required, with no way to turn it off), and what each person can do depends on their role.
 
 ## What you get
 
@@ -16,17 +16,19 @@ It runs on your own machine or server, needs a login, and keeps all your content
 | **Pipeline** | How your domains connect into your study's method, with coverage bars against each target |
 | **Charts** | Papers per domain and the spread of relevance scores |
 | **Rejected Papers** | What you read and excluded, and why. Keeping this list makes your selection process transparent and easy to report |
-| **Manage Data** *(admins)* | Forms to add, edit, and delete everything above |
+| **Manage Data** *(admins, managers)* | Forms to add, edit, and delete everything above |
+| **Users** *(admins, managers)* | Accounts, roles, 2FA status. Admins can add, disable, and reset users |
+| **Audit Log** *(admins)* | Sign-ins, failed attempts, 2FA events, admin actions, and data saves |
 
 ---
 
 ## How to use it for your review
 
-This is the workflow the app is built around. Every step happens in **Manage Data**, the last item under *Views* in the sidebar. You need an admin account to see it.
+This is the workflow the app is built around. Every step happens in **Manage Data**, under *Views* in the sidebar. You need an admin or manager account to see it.
 
 ### 1. Set up the app
 
-Install it ([Quick start](#quick-start-docker)) and sign in. The app comes with a small example corpus on time-series forecasting, so every view has something to show. Look around, then [clear it out](#starting-from-an-empty-corpus) when you're ready to start.
+Install it ([Quick start](#quick-start-docker)) and sign in. On your first sign-in you'll scan a QR code with an authenticator app and get 10 backup codes (see [Sign-in and two-factor authentication](#sign-in-and-two-factor-authentication)). The app comes with a small example corpus on time-series forecasting, so every view has something to show. Look around, then [clear it out](#starting-from-an-empty-corpus) when you're ready to start.
 
 In **Manage Data → Settings**, set the app title (for example your thesis title), an icon, and a subtitle.
 
@@ -92,15 +94,17 @@ In **Manage Data → Pipeline**, describe how the domains feed into your method,
 
 ## Quick start (Docker)
 
-You need [Docker](https://docs.docker.com/get-docker/) with Docker Compose.
+You need [Docker](https://docs.docker.com/get-docker/) with Docker Compose, and an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy, 1Password, …).
 
 ```bash
 git clone <this repo> && cd literature-review-tracker
-cp .env.example .env          # set ADMIN_EMAIL / ADMIN_PASSWORD for the first admin
+bash scripts/generate-secrets.sh   # creates .env with a random 2FA encryption key and first-admin password
 docker compose up -d --build
 ```
 
-Open http://localhost:3000 and sign in with that email and password. The first admin is created only while no users exist, so you can delete the two lines from `.env` after signing in.
+The script prints the first admin's email and password. Open http://localhost:3000, sign in, scan the QR code, and save your backup codes. The first admin is created only while no users exist, so you can delete `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` afterwards.
+
+> **Keep `TOTP_ENCRYPTION_KEY` in `.env` safe and never change it.** It encrypts everyone's 2FA secret. If it is lost or changed, nobody can complete 2FA. Recovering means deleting `state/users.json` and starting again from the first admin.
 
 Folders on the host:
 
@@ -108,9 +112,15 @@ Folders on the host:
 |--------|----------|
 | `data/` | Your corpus (JSON). Mounted writable, because **Manage Data** saves here |
 | `papers/` | Optional PDFs (read-only) |
-| `state/` | Login users and the session secret. Created on first start |
+| `state/` | Users (with 2FA state), the session secret, and the audit log |
 
-To update the app after pulling new code, run `docker compose up -d --build`. Your `data/` and `state/` folders are not affected.
+The container runs as an unprivileged user (uid 1000). On Linux, `data/` and `state/` must be writable by that uid: run `sudo chown -R 1000:1000 data state` if needed.
+
+To update after pulling new code, run `docker compose up -d --build`. Your `data/` and `state/` folders are not affected. Released versions are also published as images, `ghcr.io/<owner>/literature-review-tracker:<version>` (see [CI-CD.md](CI-CD.md)).
+
+### Behind HTTPS
+
+For anything beyond your own machine, put a reverse proxy (Caddy, nginx, Traefik) in front and set `COOKIE_SECURE=true` and `TRUST_PROXY=1` in `.env`. Without a proxy, leave `TRUST_PROXY` at `false`, or clients could fake their IP address and get around the rate limits.
 
 ## Local development
 
@@ -118,16 +128,44 @@ You need Node.js 20+.
 
 ```bash
 npm install
-ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=at-least-8-chars npm run dev:server   # API on :4000
-npm run dev                                                                        # UI on :5173
+bash scripts/generate-secrets.sh   # .env with TOTP_ENCRYPTION_KEY and a first admin
+npm run dev:server                 # API on :4000 (reads .env)
+npm run dev                        # UI on :5173
+npm run build && npm test          # end-to-end smoke test, the same one CI runs
 ```
+
+## Sign-in and two-factor authentication
+
+Two-factor authentication (2FA) is required for **every** account, and nobody can switch it off:
+
+1. **Password.** A correct password alone never opens a session.
+2. **First sign-in** (or after an admin resets your 2FA): scan the QR code with an authenticator app and enter the 6-digit code. You then get **10 backup codes**. Save them, because they are shown only once.
+3. **Every later sign-in:** enter the current 6-digit code from the app. A code can't be used twice. If you lost your phone, use a backup code instead; each one works once.
+4. **Temporary passwords:** people whose account was created or reset by an admin must choose their own password right after signing in.
+
+From the account panel (click your email at the bottom of the sidebar) you can change your password and create a new set of backup codes. If you lose both your phone and your backup codes, ask an admin to **reset your 2FA**, and your next sign-in starts the setup again.
+
+Other protections:
+
+- **Lockout:** an account locks for 15 minutes after 5 wrong passwords. An admin password reset unlocks it.
+- **Rate limits:** sign-in and 2FA requests are limited per IP.
+- **Immediate sign-out:** changing someone's role, disabling the account, or resetting their password or 2FA signs them out everywhere at once.
 
 ## Users and roles
 
-Open the account panel by clicking your email at the bottom of the sidebar. There you can change your password. Admins can also add or remove users.
+| Permission | admin | manager | user |
+|------------|:-----:|:-------:|:----:|
+| Read every view, download PDFs | ✓ | ✓ | ✓ |
+| Edit data (**Manage Data**) | ✓ | ✓ | |
+| See the user list (**Users**) | ✓ | ✓ | |
+| Add, change role, disable, reset password / 2FA, delete users | ✓ | | |
+| Read the **Audit Log** | ✓ | | |
 
-- **admin** – sees everything and can edit through **Manage Data**
-- **user** – read-only. Good for a supervisor or co-author who only needs to look
+- **admin** – runs the app and manages accounts
+- **manager** – a co-researcher or research assistant who maintains the data
+- **user** – read-only, e.g. a supervisor or examiner
+
+Roles are defined in one place, [server/permissions.js](server/permissions.js), and the server checks them on every request. Admins can't remove their own admin role or disable or delete themselves, and at least one active admin always remains.
 
 ## Starting from an empty corpus
 
@@ -143,7 +181,9 @@ Then start again from [step 2](#2-define-your-domains).
 
 ## Backups
 
-Each save from **Manage Data** writes the whole file, and the version before it is kept next to it as `*.json.bak`, which gives you one step of undo. For real history, make `data/` a Git repository and commit it now and then. Also keep a copy of `state/`, which holds your users.
+Each save from **Manage Data** writes the whole file, and the version before it is kept next to it as `*.json.bak`, which gives you one step of undo. For real history, make `data/` a Git repository and commit it now and then.
+
+Back up `state/` too (users, 2FA state, audit log), along with **`TOTP_ENCRYPTION_KEY` from `.env`**. The users file is useless without the key that decrypts its 2FA secrets. Keep the two in separate places.
 
 ---
 
@@ -191,17 +231,35 @@ Put PDFs in `papers/<domain slug>/D<domain>-<NN>-<anything>.pdf`, for example `p
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
+| `TOTP_ENCRYPTION_KEY` | — (**required**) | 64 hex characters that encrypt users' 2FA secrets. `scripts/generate-secrets.sh` creates one |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | — | Create the first admin on first start |
 | `PORT` | `4000` | HTTP port |
 | `DATA_DIR` | `./data` | Folder with the JSON files (must be writable to use **Manage Data**) |
 | `PAPERS_DIR` | `./papers` | Folder with the PDFs |
-| `AUTH_ENV_PATH` | `./.env` | Where users and the session secret are stored |
-| `COOKIE_SECURE` | `false` | Set to `true` when the app is served over HTTPS behind a reverse proxy |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | — | Create the first admin on first start |
-| `CUSTOM_PAPERS_PATH` | `./custom-papers.json` | Legacy only (see below) |
+| `STATE_DIR` | `./state` | Users, session secret, audit log |
+| `COOKIE_SECURE` | `false` | `true` when served over HTTPS (also turns on HSTS) |
+| `TRUST_PROXY` | `false` | Number of reverse-proxy hops to trust for the client IP (e.g. `1`). Leave `false` without a proxy |
+| `TWOFA_ISSUER` | `Literature Review Tracker` | Name shown in the authenticator app |
+| `SESSION_SECRET` | generated | Fixed session secret (32+ characters). Otherwise one is generated into `state/` |
+| `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MINUTES` | `5`, `15` | Account lockout |
+| `RATE_LIMIT_LOGIN`, `RATE_LIMIT_2FA` | `20`, `10` | Requests per IP per 15 min (sign-in) and per 5 min (2FA) |
 
-### Upgrading from the "+ Add Paper" version
+Sessions are kept in memory, so restarting the app signs everyone out.
 
-Earlier versions saved papers added in the UI to a separate `custom-papers.json`. On start, the server now moves those papers into `data/papers.json`, giving a paper a new number if its id is already taken, and renames the old file to `custom-papers.json.migrated`.
+### Upgrading from older versions
+
+- **Users from before 2FA** were stored as `APP_USER_*` lines in `AUTH_ENV_PATH` (`state/users.env` in Docker). On start they are moved into `state/users.json` with their passwords and roles unchanged, and each person sets up 2FA at their next sign-in.
+- **Papers from the old "+ Add Paper" form** in `custom-papers.json` (`CUSTOM_PAPERS_PATH`) are moved into `data/papers.json`. A paper whose id is already taken gets a new number, and the old file is renamed to `custom-papers.json.migrated`.
+
+## Development process
+
+Every push and pull request runs CI:
+
+- `npm audit` and the build
+- the end-to-end smoke test, run both directly and against the Docker image
+- Snyk scans of dependencies, source code, and the container image
+
+Release tags (`vX.Y.Z`) publish an image to GitHub Container Registry. See [CI-CD.md](CI-CD.md).
 
 ## License
 

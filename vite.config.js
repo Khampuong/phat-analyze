@@ -9,6 +9,8 @@ export default defineConfig({
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
   },
   server: {
+    // Nothing needs to reach the dev server cross-origin; closes the esbuild dev-server CORS advisory.
+    cors: false,
     proxy: {
       '/api': `http://localhost:${process.env.PORT || 4000}`
     }

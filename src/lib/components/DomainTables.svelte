@@ -1,5 +1,5 @@
 <script>
-  import * as XLSX from 'xlsx'
+  import { downloadWorkbook, sheetName } from '../xlsx.js'
 
   export let papers
   export let domains
@@ -40,46 +40,17 @@
     return [header, ...rows]
   }
 
-  function sheetName(label, prefix) {
-    // Excel sheet names: max 31 chars, no : \ / ? * [ ]
-    return `${prefix} ${label}`.replace(/[:\\/?*[\]]/g, '-').slice(0, 31)
-  }
-
-  function autoWidth(aoa) {
-    const widths = []
-    for (const row of aoa) {
-      row.forEach((cell, i) => {
-        const len = String(cell ?? '').length
-        widths[i] = Math.min(60, Math.max(widths[i] || 10, len + 2))
-      })
-    }
-    return widths.map(w => ({ wch: w }))
-  }
-
   function exportAll() {
-    const wb = XLSX.utils.book_new()
-
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryAoa())
-    summarySheet['!cols'] = autoWidth(summaryAoa())
-    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary')
-
-    for (const d of papersByDomain) {
-      const aoa = domainAoa(d)
-      const ws = XLSX.utils.aoa_to_sheet(aoa)
-      ws['!cols'] = autoWidth(aoa)
-      XLSX.utils.book_append_sheet(wb, ws, sheetName(d.label, `D${d.id}`))
-    }
-
-    XLSX.writeFile(wb, 'ai-dt-research-domain-comparison.xlsx')
+    downloadWorkbook('domain-tables.xlsx', [
+      { name: 'Summary', rows: summaryAoa() },
+      ...papersByDomain.map(d => ({ name: sheetName(d.label, `D${d.id}`), rows: domainAoa(d) })),
+    ])
   }
 
   function exportDomain(d) {
-    const wb = XLSX.utils.book_new()
-    const aoa = domainAoa(d)
-    const ws = XLSX.utils.aoa_to_sheet(aoa)
-    ws['!cols'] = autoWidth(aoa)
-    XLSX.utils.book_append_sheet(wb, ws, sheetName(d.label, `D${d.id}`))
-    XLSX.writeFile(wb, `domain-${d.id}-${d.slug.replace(/^domain-\d+-/, '')}.xlsx`)
+    downloadWorkbook(`domain-${d.id}-${d.slug.replace(/^domain-\d+-/, '')}.xlsx`, [
+      { name: sheetName(d.label, `D${d.id}`), rows: domainAoa(d) },
+    ])
   }
 </script>
 
