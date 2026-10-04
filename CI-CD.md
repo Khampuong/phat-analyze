@@ -66,7 +66,19 @@ These remain on purpose. None of them is a production dependency at `high` or ab
 | esbuild / Vite dev-server CORS (GHSA-67mh-4wv8-2f99) | moderate | Affects only `npm run dev`, never the production build. `server.cors` is also turned off in `vite.config.js` |
 | Vite ≤ 6.4 dev server: path traversal in optimized-deps `.map` handling, `launch-editor` NTLM hash disclosure on Windows | high (devDependency) | Only exists while `npm run dev` is running on a developer machine. Vite isn't installed in the production image (`npm ci --omit=dev`) and isn't used by `npm start`. Don't expose the dev server beyond localhost (`npm run dev` uses `--host`, so run it only on trusted networks) |
 
-All of them go away with the Svelte 5 + Vite 6 upgrade, which is a rewrite of every component's reactivity and is tracked as future work.
+Snyk Code findings reviewed as false positives (medium/low, so they don't fail CI):
+
+| Finding | Why it is a false positive |
+|---------|----------------------------|
+| "Allocation of resources without limits" on the PDF route and the SPA fallback (`server/index.js`) | Every request goes through `apiLimiter` (`app.use`, 600 per minute per IP) before these routes. Snyk only looks for a limiter on the route itself |
+| "CSRF protection is disabled" | Session cookies are `SameSite=Lax`, the API only accepts JSON bodies, and `sameOrigin` rejects cross-site state-changing requests (the smoke test checks it). Snyk only recognises the `csurf` package |
+| "Hardcoded passwords / credentials" in `scripts/smoke-test.mjs` | Throwaway test accounts on a throwaway server created by the test itself |
+
+Mark them *Ignored* in the Snyk web UI after checking that the reasoning still holds.
+
+Fixed after the first Snyk scan: `proxy-addr` 2.0.7 → 2.0.8 (critical, user impersonation via `X-Forwarded-For` parsing; comes in through express).
+
+All of the Svelte/Vite items go away with the Svelte 5 + Vite 6 upgrade, which is a rewrite of every component's reactivity and is tracked as future work.
 
 Replaced instead of accepted: the `xlsx` package (SheetJS on npm is unmaintained and has high-severity prototype pollution and ReDoS advisories) was swapped for `write-excel-file` ([src/lib/xlsx.js](src/lib/xlsx.js)).
 

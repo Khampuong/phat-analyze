@@ -56,6 +56,7 @@ export const config = {
   loginLockMinutes: intEnv('LOGIN_LOCK_MINUTES', 15),
   rateLimitLogin: intEnv('RATE_LIMIT_LOGIN', 20), // per IP per 15 minutes
   rateLimit2fa: intEnv('RATE_LIMIT_2FA', 10), // per IP per 5 minutes
+  rateLimitApi: intEnv('RATE_LIMIT_API', 600), // per IP per minute, all requests
   preAuthMinutes: 5,
   sessionHours: 12,
 }

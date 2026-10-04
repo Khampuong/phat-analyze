@@ -243,6 +243,7 @@ Put PDFs in `papers/<domain slug>/D<domain>-<NN>-<anything>.pdf`, for example `p
 | `SESSION_SECRET` | generated | Fixed session secret (32+ characters). Otherwise one is generated into `state/` |
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MINUTES` | `5`, `15` | Account lockout |
 | `RATE_LIMIT_LOGIN`, `RATE_LIMIT_2FA` | `20`, `10` | Requests per IP per 15 min (sign-in) and per 5 min (2FA) |
+| `RATE_LIMIT_API` | `600` | All requests per IP per minute |
 
 Sessions are kept in memory, so restarting the app signs everyone out.
 

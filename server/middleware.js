@@ -52,6 +52,25 @@ export function requirePermission(permission) {
 const limiter = (windowMinutes, limit, message) =>
   rateLimit({ windowMs: windowMinutes * 60_000, limit, standardHeaders: true, legacyHeaders: false, message: { error: message } })
 
+// CSRF defence on top of SameSite=Lax cookies: a state-changing request whose Origin (or Referer)
+// names another site is refused. Browsers always send Origin on cross-site POST/PUT/PATCH/DELETE.
+export function sameOrigin(req, res, next) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
+  const source = req.get('origin') || req.get('referer')
+  if (!source) return next() // non-browser clients (curl, the smoke test) send neither
+  let host
+  try {
+    host = new URL(source).host
+  } catch {
+    host = null
+  }
+  if (host !== req.get('host')) return res.status(403).json({ error: 'Cross-site request blocked' })
+  next()
+}
+
+// General ceiling for every request that reads files (API and the SPA fallback), against floods.
+export const apiLimiter = limiter(1, config.rateLimitApi, 'Too many requests. Please slow down.')
+
 export const loginLimiter = limiter(15, config.rateLimitLogin, 'Too many sign-in attempts. Please try again later.')
 // Stricter than login: a 6-digit code is far easier to guess than a password.
 export const twoFaLimiter = limiter(5, config.rateLimit2fa, 'Too many verification attempts. Please try again later.')

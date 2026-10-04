@@ -5,7 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { config, sessionSecret } from './config.js'
 import { loadUsers, bootstrapAdmin } from './users.js'
-import { requireAuth, requirePermission } from './middleware.js'
+import { requireAuth, requirePermission, sameOrigin, apiLimiter } from './middleware.js'
 import { recordEvent } from './audit.js'
 import authRoutes from './routes/auth.js'
 import adminRoutes from './routes/admin.js'
@@ -45,7 +45,9 @@ app.use(
     strictTransportSecurity: config.cookieSecure,
   })
 )
+app.use(apiLimiter)
 app.use(express.json({ limit: '5mb' }))
+app.use('/api', sameOrigin)
 
 app.use(
   session({

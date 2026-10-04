@@ -63,7 +63,7 @@ jobs:
           docker run -d --name lrt -p 3000:80 \
             -e TOTP_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
             -e ADMIN_EMAIL=admin@example.com -e ADMIN_PASSWORD=ci-admin-password \
-            -e RATE_LIMIT_LOGIN=500 -e RATE_LIMIT_2FA=500 \
+            -e RATE_LIMIT_LOGIN=500 -e RATE_LIMIT_2FA=500 -e RATE_LIMIT_API=5000 \
             literature-review-tracker:ci
           for i in $(seq 1 30); do
             curl -sf http://localhost:3000/api/health > /dev/null && exit 0

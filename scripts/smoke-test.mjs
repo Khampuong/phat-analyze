@@ -72,10 +72,10 @@ function totp(secret, stepOffset = 0) {
 // A tiny cookie-keeping client: one per simulated browser.
 function client() {
   let cookie = ''
-  async function call(method, url, body) {
+  async function call(method, url, body, extraHeaders = {}) {
     const res = await fetch(BASE_URL + url, {
       method,
-      headers: { 'Content-Type': 'application/json', ...(cookie && { Cookie: cookie }) },
+      headers: { 'Content-Type': 'application/json', ...(cookie && { Cookie: cookie }), ...extraHeaders },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     const set = res.headers.getSetCookie?.() || []
@@ -89,7 +89,7 @@ function client() {
   return {
     get: (u) => call('GET', u),
     post: (u, b = {}) => call('POST', u, b),
-    put: (u, b) => call('PUT', u, b),
+    put: (u, b, h) => call('PUT', u, b, h),
     patch: (u, b) => call('PATCH', u, b),
     del: (u) => call('DELETE', u),
   }
@@ -132,6 +132,7 @@ async function startServer() {
       // The functional checks below make more sign-in calls than the production limits allow.
       RATE_LIMIT_LOGIN: '500',
       RATE_LIMIT_2FA: '500',
+      RATE_LIMIT_API: '5000',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
@@ -193,6 +194,8 @@ async function main() {
   check((await user.c.get('/api/admin/users')).status === 403, 'user cannot list users (users:read)')
   check((await user.c.get('/api/admin/audit-logs')).status === 403, 'user cannot read the audit log')
   check((await mgr.c.put('/api/data/config', config)).status === 200, 'manager can edit data')
+  check((await mgr.c.put('/api/data/config', config, { Origin: 'https://evil.example' })).status === 403, 'cross-site write is blocked (CSRF Origin check)')
+  check((await mgr.c.put('/api/data/config', config, { Origin: BASE_URL })).status === 200, 'same-origin write with an Origin header is allowed')
   check((await mgr.c.get('/api/admin/users')).status === 200, 'manager can list users')
   check((await mgr.c.post('/api/admin/users', { email: 'z@example.com', role: 'admin', temporaryPassword: 'long-enough-pw' })).status === 403, 'manager cannot create users (users:write)')
   check((await mgr.c.get('/api/admin/audit-logs')).status === 403, 'manager cannot read the audit log')
