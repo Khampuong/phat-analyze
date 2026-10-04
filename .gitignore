@@ -12,3 +12,4 @@ papers/*
 *.json.bak
 *.json.tmp
 *.migrated
+sessions.json

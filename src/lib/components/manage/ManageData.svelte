@@ -230,7 +230,7 @@
       save={(items) => saveTo('rejected', items)}
     />
   {:else if section === 'settings'}
-    <CollectionEditor items={[config]} fields={configFields} single save={([c]) => saveTo('config', c)} />
+    <CollectionEditor items={[config]} fields={configFields} single save={(c) => saveTo('config', c)} />
   {/if}
 </section>
 

@@ -17,11 +17,13 @@
     { value: '', label: 'Neutral' },
   ]
 
+  // Replace the whole object rather than assigning draft[key]: in Svelte 5's legacy mode a member
+  // assignment here compiles to an invalidation of the template's {#each} variable and throws.
   function addTag(key) {
-    draft[key] = [...draft[key], { label: '', type: 'yes' }]
+    draft = { ...draft, [key]: [...draft[key], { label: '', type: 'yes' }] }
   }
   function removeTag(key, i) {
-    draft[key] = draft[key].filter((_, j) => j !== i)
+    draft = { ...draft, [key]: draft[key].filter((_, j) => j !== i) }
   }
 </script>
 

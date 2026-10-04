@@ -25,12 +25,12 @@ flowchart TD
 
 | Job | What it does | Why |
 |-----|--------------|-----|
-| `npm audit` | `npm audit --omit=dev --audit-level=high` blocks. A full `npm audit` is also printed for information | Known-vulnerable code that runs in production fails the build. Production means `dependencies`: server packages **and** libraries bundled into the browser (svelte, write-excel-file, html-to-image). Build-only tools (vite and its plugin) are `devDependencies` and never reach the image |
-| `Build + smoke test` | `npm run build`, then `npm test` ([scripts/smoke-test.mjs](scripts/smoke-test.mjs)) | Starts the real server on throwaway data and walks the whole security flow: forced 2FA setup, backup codes, TOTP replay rejection, forced password change, RBAC for all three roles, lockout and admin unlock, disable, 2FA reset, the audit log, and data validation |
-| `Docker image + smoke test` | Builds the image, starts it, runs the same smoke test against the container, checks it doesn't run as root | Catches Dockerfile breakage and anything that only differs in the production image |
+| `npm audit` | `npm audit --omit=dev --audit-level=high`, then the full tree at the same level | Known-vulnerable code that runs in production fails the build. Production means `dependencies`: server packages **and** libraries bundled into the browser (svelte, write-excel-file, html-to-image). Build-only tools (vite and its plugin) are `devDependencies` and never reach the image |
+| `Build + smoke test + browser test` | `npm run build`, `npm test` ([scripts/smoke-test.mjs](scripts/smoke-test.mjs)), `npm run test:ui` ([scripts/ui-test.mjs](scripts/ui-test.mjs)) | The smoke test starts the real server on throwaway data and goes through the whole security flow over HTTP: forced 2FA setup, backup codes, TOTP replay rejection, forced password change, RBAC for all three roles, lockout and admin unlock, disable, 2FA reset, CSRF, sessions surviving a restart, the audit log, and data validation. The browser test drives the built UI in headless Chrome: the sign-in screens, every view, role-based tabs, and the Manage Data editors |
+| `Docker image + smoke test` | Builds the image, starts it, runs the same smoke test against the container, checks it doesn't run as root and has no default test accounts | Catches Dockerfile breakage and anything that only differs in the production image |
 | `Snyk` | `snyk test` (npm dependencies), `snyk code test` (static analysis of our source), `snyk container test` (base image OS packages + what's installed in the image), each failing on **high** or **critical**. Results go to the repo's *Security → Code scanning* tab. On `main` it also runs `snyk monitor` so Snyk keeps alerting on new CVEs | Dependency, code, and image vulnerabilities from one tool |
 
-Dependabot ([.github/dependabot.yml](.github/dependabot.yml)) opens weekly update PRs for npm packages, GitHub Actions, and the Docker base image. CI checks them like any other PR.
+Workflows run on Node 24 (LTS), the same as the Docker image. Every third-party action is pinned to a full commit SHA, with the version tag in a comment, so a moved or compromised tag can't change what runs. Dependabot ([.github/dependabot.yml](.github/dependabot.yml)) opens weekly update PRs for npm packages, GitHub Actions (including the pinned SHAs), and the Docker base image. CI checks them like any other PR.
 
 ### Setting up Snyk (once per repository)
 
@@ -44,7 +44,9 @@ Without the secret the Snyk job passes with a warning instead of scanning, so fo
 ```bash
 npm ci
 npm audit --omit=dev --audit-level=high
+npm audit --audit-level=high
 npm run build && npm test                  # smoke test on a throwaway server
+npm run test:ui                            # browser test (Chrome or Edge; BROWSER_PATH to choose)
 
 snyk auth                                  # once; opens the browser
 npm run security:scan                      # snyk test + snyk code test (high+)
@@ -55,32 +57,25 @@ snyk container test literature-review-tracker:local --file=Dockerfile --severity
 
 If a change touches sign-in, 2FA, roles, or the data API, add checks for it to `scripts/smoke-test.mjs`. That script is the regression suite.
 
-## Accepted findings
+## Scanner findings
 
-These remain on purpose. None of them is a production dependency at `high` or above, so they don't fail CI:
+`npm audit` (full tree, including build tooling) and `snyk test` both report **no known vulnerabilities**.
 
-| Finding | Severity | Why it is accepted |
-|---------|----------|--------------------|
-| Svelte 4 SSR advisories (XSS via spread attributes, `<svelte:element>`, `bind:innerText`) | moderate | Only exploitable with server-side rendering. This app renders only in the browser and never imports `svelte/server` |
-| Svelte "DOM clobbering of internal framework state" | moderate | Needs attacker-controlled HTML injected into the page. The app never uses `{@html}`, and the CSP blocks inline scripts |
-| esbuild / Vite dev-server CORS (GHSA-67mh-4wv8-2f99) | moderate | Affects only `npm run dev`, never the production build. `server.cors` is also turned off in `vite.config.js` |
-| Vite ≤ 6.4 dev server: path traversal in optimized-deps `.map` handling, `launch-editor` NTLM hash disclosure on Windows | high (devDependency) | Only exists while `npm run dev` is running on a developer machine. Vite isn't installed in the production image (`npm ci --omit=dev`) and isn't used by `npm start`. Don't expose the dev server beyond localhost (`npm run dev` uses `--host`, so run it only on trusted networks) |
+Fixed along the way:
 
-Snyk Code findings reviewed as false positives (medium/low, so they don't fail CI):
+- **Svelte 4 → 5 and Vite 5 → 8.** This removed the Svelte SSR/XSS advisories, the esbuild dev-server CORS issue, and Vite's dev-server path traversal and Windows `launch-editor` advisories. Components still use the Svelte 4 syntax, which Svelte 5 compiles in legacy mode.
+- **`proxy-addr` 2.0.7 → 2.0.8** (critical, user impersonation through `X-Forwarded-For` parsing; comes in through express).
+- **`xlsx` → `write-excel-file`.** SheetJS on npm is unmaintained and has high-severity prototype pollution and ReDoS advisories. See [src/lib/xlsx.js](src/lib/xlsx.js).
+
+Snyk Code findings reviewed as false positives. They are medium or low severity, so they don't fail CI:
 
 | Finding | Why it is a false positive |
 |---------|----------------------------|
 | "Allocation of resources without limits" on the PDF route and the SPA fallback (`server/index.js`) | Every request goes through `apiLimiter` (`app.use`, 600 per minute per IP) before these routes. Snyk only looks for a limiter on the route itself |
 | "CSRF protection is disabled" | Session cookies are `SameSite=Lax`, the API only accepts JSON bodies, and `sameOrigin` rejects cross-site state-changing requests (the smoke test checks it). Snyk only recognises the `csurf` package |
-| "Hardcoded passwords / credentials" in `scripts/smoke-test.mjs` | Throwaway test accounts on a throwaway server created by the test itself |
+| "Hardcoded passwords / credentials" in `scripts/` | Throwaway test accounts on a throwaway server that the tests create themselves |
 
 Mark them *Ignored* in the Snyk web UI after checking that the reasoning still holds.
-
-Fixed after the first Snyk scan: `proxy-addr` 2.0.7 → 2.0.8 (critical, user impersonation via `X-Forwarded-For` parsing; comes in through express).
-
-All of the Svelte/Vite items go away with the Svelte 5 + Vite 6 upgrade, which is a rewrite of every component's reactivity and is tracked as future work.
-
-Replaced instead of accepted: the `xlsx` package (SheetJS on npm is unmaintained and has high-severity prototype pollution and ReDoS advisories) was swapped for `write-excel-file` ([src/lib/xlsx.js](src/lib/xlsx.js)).
 
 ## CD: release a version
 

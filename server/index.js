@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { config, sessionSecret } from './config.js'
+import { FileSessionStore } from './sessionStore.js'
 import { loadUsers, bootstrapAdmin, seedTestUsers } from './users.js'
 import { requireAuth, requirePermission, sameOrigin, apiLimiter } from './middleware.js'
 import { recordEvent } from './audit.js'
@@ -28,6 +29,14 @@ console.log(`Loaded corpus data from ${DATA_DIR}`)
 const migratedPapers = migrateCustomPapers()
 if (migratedPapers) console.log(`Moved ${migratedPapers} papers from the old custom-papers store into papers.json`)
 console.log(`Indexed ${loadPdfIndex()} paper PDFs`)
+
+const sessionStore = new FileSessionStore(path.join(config.stateDir, 'sessions.json'))
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.on(signal, () => {
+    sessionStore.flush()
+    process.exit(0)
+  })
+}
 
 const app = express()
 app.set('trust proxy', config.trustProxy)
@@ -54,6 +63,7 @@ app.use('/api', sameOrigin)
 app.use(
   session({
     name: 'lrt.sid',
+    store: sessionStore,
     secret: sessionSecret(),
     resave: false,
     saveUninitialized: false,

@@ -113,14 +113,14 @@ async function enrol(email, password, newPassword) {
   return { c, secret: setup.data.secret, backupCodes: confirm.data.backupCodes, user: confirm.data.user }
 }
 
+let serverEnv = null
 async function startServer() {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lrt-smoke-'))
-  fs.cpSync(path.join(ROOT, 'data'), path.join(tmpDir, 'data'), { recursive: true })
-  const port = 4600 + Math.floor(Math.random() * 300)
-  BASE_URL = `http://localhost:${port}`
-  server = spawn(process.execPath, [path.join(ROOT, 'server', 'index.js')], {
-    cwd: tmpDir,
-    env: {
+  if (!serverEnv) {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lrt-smoke-'))
+    fs.cpSync(path.join(ROOT, 'data'), path.join(tmpDir, 'data'), { recursive: true })
+    const port = 4600 + Math.floor(Math.random() * 300)
+    BASE_URL = `http://localhost:${port}`
+    serverEnv = {
       ...process.env,
       PORT: String(port),
       DATA_DIR: path.join(tmpDir, 'data'),
@@ -134,7 +134,11 @@ async function startServer() {
       RATE_LIMIT_2FA: '500',
       RATE_LIMIT_API: '5000',
       SEED_TEST_USERS: 'false', // the test creates its own manager/user accounts
-    },
+    }
+  }
+  server = spawn(process.execPath, [path.join(ROOT, 'server', 'index.js')], {
+    cwd: tmpDir,
+    env: serverEnv,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let log = ''
@@ -147,6 +151,14 @@ async function startServer() {
     await new Promise((r) => setTimeout(r, 200))
   }
   fail('server did not start', log)
+}
+
+async function restartServer() {
+  await new Promise((r) => setTimeout(r, 800)) // let the session store finish its batched write
+  const exited = new Promise((resolve) => server.once('exit', resolve))
+  server.kill()
+  await exited
+  await startServer()
 }
 
 async function main() {
@@ -248,6 +260,11 @@ async function main() {
   const audit = await admin.c.get('/api/admin/audit-logs')
   const events = new Set(audit.data.map((e) => e.event))
   check(['login_failed', 'login_locked', '2fa_setup_complete', '2fa_backup_code_used', 'admin_password_reset', 'admin_2fa_reset', 'data_saved'].every((e) => events.has(e)), 'audit log records sign-in, 2FA, admin and data events', [...events])
+
+  if (serverEnv) {
+    await restartServer()
+    check((await admin.c.get('/api/auth/me')).status === 200, 'sessions survive a server restart (file session store)')
+  }
 
   await admin.c.post('/api/auth/logout')
   check((await admin.c.get('/api/auth/me')).status === 401, 'logout ends the session')

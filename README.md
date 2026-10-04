@@ -124,7 +124,7 @@ For anything beyond your own machine, put a reverse proxy (Caddy, nginx, Traefik
 
 ## Local development
 
-You need Node.js 20+.
+You need Node.js 22.12+ (24 LTS recommended).
 
 ```bash
 npm install
@@ -132,6 +132,7 @@ bash scripts/generate-secrets.sh   # .env with TOTP_ENCRYPTION_KEY and a first a
 npm run dev:server                 # API on :4000 (reads .env)
 npm run dev                        # UI on :5173
 npm run build && npm test          # end-to-end smoke test, the same one CI runs
+npm run test:ui                    # browser test (needs Chrome or Edge)
 ```
 
 ### Test accounts (development only)
@@ -258,7 +259,7 @@ Put PDFs in `papers/<domain slug>/D<domain>-<NN>-<anything>.pdf`, for example `p
 | `RATE_LIMIT_API` | `600` | All requests per IP per minute |
 | `SEED_TEST_USERS` | `true` outside production | Create the default test accounts (see [Test accounts](#test-accounts-development-only)) |
 
-Sessions are kept in memory, so restarting the app signs everyone out.
+Sessions are saved in `state/sessions.json` (session ids only as hashes), so restarting the app doesn't sign anyone out.
 
 ### Upgrading from older versions
 
@@ -274,6 +275,10 @@ Every push and pull request runs CI:
 - Snyk scans of dependencies, source code, and the container image
 
 Release tags (`vX.Y.Z`) publish an image to GitHub Container Registry. See [CI-CD.md](CI-CD.md).
+
+## Credits
+
+Developed by Wanut Padee.
 
 ## License
 

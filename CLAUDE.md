@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-Self-hosted literature review tracker: an Express API with a Svelte 4 + Vite 5 SPA. Corpus content lives in plain JSON files and users in a JSON file. There is no database. Sign-in requires 2FA (TOTP) for every account, and access is role-based (RBAC). The auth design follows [nuttkku/2FA-example-coding](https://github.com/nuttkku/2FA-example-coding).
+Self-hosted literature review tracker: an Express API (Node 24) with a Svelte 5 + Vite 8 SPA. Components are written in Svelte 4 syntax, which Svelte 5 compiles in legacy mode. Corpus content lives in plain JSON files and users in a JSON file. There is no database. Sign-in requires 2FA (TOTP) for every account, and access is role-based (RBAC). The auth design follows [nuttkku/2FA-example-coding](https://github.com/nuttkku/2FA-example-coding).
 
 ## Workflow rules (standing agreement)
 
 1. **Read [CI-CD.md](CI-CD.md) before starting a feature.** It lists what CI enforces and how to run the same checks locally.
-2. **Before committing:** `npm run build && npm test`. If Snyk is authenticated, also run `npm run security:scan` and take every finding seriously before calling it a false positive.
-3. **If a change touches sign-in, 2FA, roles, or the data API, add checks to [scripts/smoke-test.mjs](scripts/smoke-test.mjs).** It is the only regression suite, and CI runs it directly and against the Docker image.
+2. **Before committing:** `npm run build && npm test && npm run test:ui`. If Snyk is authenticated, also run `npm run security:scan` and take every finding seriously before calling it a false positive.
+3. **If a change touches sign-in, 2FA, roles, or the data API, add checks to [scripts/smoke-test.mjs](scripts/smoke-test.mjs). If it changes a screen, add them to [scripts/ui-test.mjs](scripts/ui-test.mjs).** These are the regression suites, and CI runs both. The UI test has already caught two bugs that the API test couldn't see.
 4. **When a task is finished, commit and push to GitHub** (`origin`, branch `main`) without waiting to be asked. Update this file with new design decisions, and the README when users would notice the change.
 5. This repo is a public template. Never commit real research data, personal names, or secrets. `data/` holds only the generic example corpus. The UI and docs are in English.
 
@@ -17,7 +17,8 @@ npm install
 bash scripts/generate-secrets.sh     # .env with TOTP_ENCRYPTION_KEY + first admin
 npm run dev:server                   # API on :4000 (node --env-file=.env)
 npm run dev                          # Vite UI on :5173, proxies /api
-npm run build && npm test            # build + end-to-end smoke test
+npm run build && npm test            # build + end-to-end smoke test (API)
+npm run test:ui                      # browser test in headless Chrome/Edge
 npm run security:scan                # snyk test + snyk code test (needs `snyk auth`)
 docker compose up -d --build         # app on :3000
 ```
@@ -54,7 +55,7 @@ docker compose up -d --build         # app on :3000
 - **Admin guards:** an admin can't demote, disable, or delete themselves, and there is always at least one active admin.
 - **`TRUST_PROXY` defaults to false.** Trusting `X-Forwarded-For` without a real proxy lets clients spoof `req.ip`, which feeds the rate limits and the audit log.
 - **CSP (helmet):** `script-src 'self'`, so the theme bootstrap lives in `public/theme.js`, not inline. `worker-src blob:` because write-excel-file zips in a Web Worker. `upgrade-insecure-requests` and HSTS only when `COOKIE_SECURE=true`.
-- **Sessions use the in-memory express-session store** (single instance), so a restart signs everyone out. Use a shared store if this ever runs as more than one instance.
+- **Sessions** use `FileSessionStore` (`server/sessionStore.js`): kept in memory, mirrored to `STATE_DIR/sessions.json` (batched writes, flushed on SIGTERM/SIGINT), expired ones pruned every 15 minutes. Session ids are stored only as SHA-256 hashes. This works for a single instance; use a shared store if it ever runs as more than one.
 
 ## Data model notes
 
@@ -65,10 +66,11 @@ docker compose up -d --build         # app on :3000
 - The corpus is sent only through the authenticated API and never bundled into `dist/`.
 - To add a field to a collection, update the validator in `dataStore.js`, the field schema in `ManageData.svelte`, the view that shows it, and the README data reference.
 
+## Svelte 5 legacy-mode gotchas
+
+- Mount with `mount(App, { target })` from `svelte`, not `new App()`.
+- In a component that binds `draft[f.key]` inside `{#each fields as f}`, assigning `draft[key] = …` in a script function compiles to code that references `f` and throws `ReferenceError: f is not defined`. Replace the whole object instead: `draft = { ...draft, [key]: … }`.
+
 ## Dependencies policy
 
 `dependencies` = anything that runs in production: server packages **and** libraries bundled into the browser (svelte, write-excel-file, html-to-image). `devDependencies` = build tooling only (vite, @sveltejs/vite-plugin-svelte). CI's blocking `npm audit --omit=dev --audit-level=high` and `snyk test` (prod deps by default) rely on this split, so put a new browser library in `dependencies`.
-
-## Known accepted findings
-
-Svelte 4 (moderate) and Vite 5 dev-server (high, devDependency only) advisories that need the Svelte 5 + Vite 6 migration to fix. See [CI-CD.md](CI-CD.md#accepted-findings) for why each one is safe here.

@@ -20,4 +20,4 @@ Only the latest release gets security fixes.
 - Serve it over HTTPS behind a reverse proxy and set `COOKIE_SECURE=true` and `TRUST_PROXY=1`.
 - Keep `TOTP_ENCRYPTION_KEY` secret and back it up separately from `state/`.
 - See [README.md](README.md#sign-in-and-two-factor-authentication) for how sign-in and 2FA work,
-  and [CI-CD.md](CI-CD.md#accepted-findings) for known, accepted scanner findings.
+  and [CI-CD.md](CI-CD.md#scanner-findings) for scanner results and reviewed false positives.
