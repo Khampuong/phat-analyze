@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.vite/
+.env
+app.env
+custom-papers.json
+users.json
+audit.log
+state/
+papers/*
+!papers/.gitkeep
+*.json.bak
+*.json.tmp
+*.migrated
+sessions.json
