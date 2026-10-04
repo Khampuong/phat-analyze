@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PAPERS_DIR = process.env.PAPERS_DIR || path.join(__dirname, '..', 'papers')
 
 // Maps paper id -> absolute PDF path. Built once at startup by scanning known domain
-// folders for files named "D{domain}-NN-....pdf" (D-prefix added 2026-08-23), never from
+// folders for files named "D{domain}-NN-....pdf", never from
 // user input, so /api/papers/:id/pdf can only ever serve a file this scan already found —
 // no path traversal is possible.
 let pdfById = new Map()

@@ -30,7 +30,7 @@
 <section class="gap-section">
   <div class="gap-header">
     <h2>Research Gap Analysis</h2>
-    <p class="subtitle">{gaps.length} gaps — แต่ละ gap มี status บอกว่า "ยังเปิดอยู่" / "ปิดไปมากแล้วในระดับ literature" / "มีหลักฐานเพียงพอแล้ว ไม่ต้องหาเพิ่ม"</p>
+    <p class="subtitle">{gaps.length} gaps. Each status says whether the gap is still open, partly covered by the literature, or closed with enough evidence.</p>
   </div>
 
   <!-- Status summary row -->

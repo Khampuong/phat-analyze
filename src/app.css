@@ -142,3 +142,20 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.03em;
 }
 .badge.caution { background: var(--tag-warn-bg); color: var(--tag-warn-text); border: 1px solid var(--tag-warn-border); }
+
+/* ── Manage Data (admin editors) ──────────────────────────── */
+.manage .btn {
+  padding: 6px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); font-size: 0.78rem; cursor: pointer; white-space: nowrap;
+  transition: all var(--transition);
+}
+.manage .btn:hover { border-color: var(--accent); color: var(--text); }
+.manage .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.manage .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.manage .btn.primary:hover { opacity: 0.9; color: #fff; }
+.manage .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--surface); font-weight: 600; }
+.manage .btn.ghost-danger:hover { border-color: var(--danger); color: var(--danger); }
+.manage .msg { font-size: 0.78rem; padding: 8px 10px; border-radius: var(--radius); }
+.manage .msg.error { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); }
+.manage .msg.ok { color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); }

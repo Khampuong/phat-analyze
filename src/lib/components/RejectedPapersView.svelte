@@ -3,8 +3,8 @@
   export let totalIncluded = 0
 
   const statusMeta = {
-    rejected: { label: 'อ่านแล้ว ไม่เอาเข้าคลัง', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
-    removed:  { label: 'เอาเข้าแล้ว ถอนออกทีหลัง', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
+    rejected: { label: 'Read, not included', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
+    removed:  { label: 'Included, removed later', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
   }
   const ACCEPTED_COLOR = '#34d399'
 
@@ -20,26 +20,26 @@
   $: removedPct = totalReviewed ? (removedAfterInclusion / totalReviewed) * 100 : 0
 
   const legend = [
-    { key: 'accepted', color: ACCEPTED_COLOR, label: 'เข้าคลัง (accepted)', desc: 'อ่านแล้ว ผ่านเกณฑ์ นับรวมในคลัง' },
-    { key: 'rejected', color: statusMeta.rejected.color, label: 'อ่านแล้ว ไม่เอาเข้า', desc: 'ประเมิน/อ่านแล้ว แต่ไม่ผ่านเกณฑ์ ไม่เคยได้เลขถาวรในคลัง' },
-    { key: 'removed', color: statusMeta.removed.color, label: 'เข้าแล้วถอนออก', desc: 'เคยผ่านเกณฑ์และมีเลขในคลังแล้ว แต่ถูกถอนออกทีหลังด้วย editorial judgment' },
+    { key: 'accepted', color: ACCEPTED_COLOR, label: 'Included', desc: 'Read and met the criteria; counted in the corpus' },
+    { key: 'rejected', color: statusMeta.rejected.color, label: 'Rejected', desc: 'Read or screened but did not meet the criteria; never got a corpus number' },
+    { key: 'removed', color: statusMeta.removed.color, label: 'Removed', desc: 'Was included with a corpus number, then taken out later on editorial judgment' },
   ]
 </script>
 
 <section class="rj-section">
   <div class="rj-header">
     <h2>Rejected / Excluded Papers</h2>
-    <p class="subtitle">Paper ที่ถูกสำรวจ/อ่านระหว่างค้นวรรณกรรม แต่ไม่ได้เข้าคลังสุดท้าย — เก็บไว้เพื่อความโปร่งใสของกระบวนการคัดเลือก และกันเผลอหยิบมาอ้างซ้ำ</p>
+    <p class="subtitle">Papers read or screened during the search that did not make the final corpus. Kept so the selection process is transparent and nothing gets cited by accident.</p>
   </div>
 
   <div class="rj-progress">
-    <div class="prog-label">อ่าน/ประเมินทั้งหมด</div>
+    <div class="prog-label">All papers read</div>
     <div class="prog-bar">
-      <div class="prog-seg" style="width:{acceptedPct}%; background:{ACCEPTED_COLOR}" title="เข้าคลัง {totalIncluded}"></div>
-      <div class="prog-seg" style="width:{rejectedPct}%; background:{statusMeta.rejected.color}" title="ไม่เอาเข้า {rejectedOutright}"></div>
-      <div class="prog-seg" style="width:{removedPct}%; background:{statusMeta.removed.color}" title="เข้าแล้วถอน {removedAfterInclusion}"></div>
+      <div class="prog-seg" style="width:{acceptedPct}%; background:{ACCEPTED_COLOR}" title="Included {totalIncluded}"></div>
+      <div class="prog-seg" style="width:{rejectedPct}%; background:{statusMeta.rejected.color}" title="Rejected {rejectedOutright}"></div>
+      <div class="prog-seg" style="width:{removedPct}%; background:{statusMeta.removed.color}" title="Removed {removedAfterInclusion}"></div>
     </div>
-    <div class="prog-count">{totalReviewed} papers อ่าน/ประเมินทั้งหมด</div>
+    <div class="prog-count">{totalReviewed} papers read in total</div>
 
     <div class="rj-legend">
       {#each legend as item}
@@ -60,7 +60,7 @@
   </div>
 
   <div class="filter-row">
-    {#each [['all', `ทั้งหมด (${rejected.length})`], ['rejected', `ไม่เอาเข้า (${rejectedOutright})`], ['removed', `เข้าแล้วถอน (${removedAfterInclusion})`]] as [f, label]}
+    {#each [['all', `All (${rejected.length})`], ['rejected', `Rejected (${rejectedOutright})`], ['removed', `Removed (${removedAfterInclusion})`]] as [f, label]}
       <button class="filter-btn" class:active={filter === f} on:click={() => filter = f}>{label}</button>
     {/each}
   </div>
@@ -82,7 +82,7 @@
       </div>
     {/each}
     {#if filtered.length === 0}
-      <div class="empty">ไม่มี paper ในหมวดนี้</div>
+      <div class="empty">No papers in this category</div>
     {/if}
   </div>
 </section>

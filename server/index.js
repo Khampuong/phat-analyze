@@ -15,8 +15,8 @@ import {
 } from './auth.js'
 import { getAppData } from './appData.js'
 import { loadPdfIndex, getPdfPath } from './papers.js'
-import { addCustomPaper, nextMainId } from './customPapers.js'
-import { DATA_DIR, loadConfig, loadData, loadDomains } from './data.js'
+import { DATA_DIR, loadConfig, loadData } from './data.js'
+import { COLLECTION_NAMES, saveCollection, migrateCustomPapers } from './dataStore.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 4000
@@ -26,12 +26,14 @@ await bootstrapAdmin()
 const secret = ensureSessionSecret()
 loadData() // fail fast on malformed JSON instead of on the first request
 console.log(`Loaded corpus data from ${DATA_DIR}`)
+const migrated = migrateCustomPapers()
+if (migrated) console.log(`Moved ${migrated} papers from the old custom-papers store into papers.json`)
 const pdfCount = loadPdfIndex()
 console.log(`Indexed ${pdfCount} paper PDFs`)
 
 const app = express()
 app.set('trust proxy', 1)
-app.use(express.json())
+app.use(express.json({ limit: '5mb' }))
 
 app.use(
   session({
@@ -144,35 +146,17 @@ app.get('/api/papers/:id/pdf', requireAuth, (req, res) => {
   res.download(pdfPath)
 })
 
-app.post('/api/papers', requireAdmin, (req, res) => {
-  const b = req.body || {}
-  const domain = Number(b.domain)
-  if (!loadDomains().some(d => d.id === domain)) {
-    return res.status(400).json({ error: 'domain must match an id in domains.json' })
+// Admin "Manage Data" tab: replaces one whole JSON file in DATA_DIR after validating it.
+app.put('/api/data/:name', requireAdmin, (req, res) => {
+  if (!COLLECTION_NAMES.includes(req.params.name)) return res.status(404).json({ error: 'Unknown collection' })
+  try {
+    res.json(saveCollection(req.params.name, req.body))
+  } catch (e) {
+    if (['EROFS', 'EACCES', 'EPERM'].includes(e.code)) {
+      return res.status(500).json({ error: `Cannot write to ${DATA_DIR}. Make sure the data folder is writable (not mounted read-only).` })
+    }
+    res.status(e.status || 500).json({ error: e.message })
   }
-  if (!b.title || !b.authors || !b.venue || !b.year) {
-    return res.status(400).json({ error: 'title, authors, venue, and year are required' })
-  }
-  const year = Number(b.year)
-  if (!Number.isInteger(year)) {
-    return res.status(400).json({ error: 'year must be a number' })
-  }
-
-  const score = Number(b.score)
-  if (!Number.isInteger(score) || score < 1 || score > 10) {
-    return res.status(400).json({ error: 'score must be an integer 1-10' })
-  }
-  const id = nextMainId(loadData().papers)
-  const paper = {
-    id, num: String(id).padStart(2, '0'), domain, score,
-    caution: !!b.caution,
-    title: b.title, authors: b.authors, venue: b.venue, year,
-    doi: b.doi || undefined,
-    what: b.what || '', how: b.how || '', results: b.results || '', usage: b.usage || '',
-    tags: Array.isArray(b.tags) ? b.tags : [],
-  }
-  addCustomPaper(paper)
-  res.status(201).json(paper)
 })
 
 app.get('/api/users', requireAdmin, (req, res) => {

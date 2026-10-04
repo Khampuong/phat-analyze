@@ -10,15 +10,17 @@ services:
       - DATA_DIR=/app/data
       - PAPERS_DIR=/app/papers
       - AUTH_ENV_PATH=/app/state/users.env
+      # Legacy: papers from the old "+ Add Paper" store are moved into data/papers.json on start.
       - CUSTOM_PAPERS_PATH=/app/state/custom-papers.json
       # First-run only: creates the first admin when no users exist yet. Safe to remove afterwards.
       - ADMIN_EMAIL=${ADMIN_EMAIL:-}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     volumes:
-      # Your corpus (JSON files) — edit on the host, then refresh the browser to see changes.
-      - ./data:/app/data:ro
+      # Your corpus (JSON files). Writable so the "Manage Data" tab can save; you can still edit
+      # the files on the host and refresh the browser.
+      - ./data:/app/data
       # Optional paper PDFs: papers/<domain slug>/D<domain>-<NN>-<name>.pdf
       - ./papers:/app/papers:ro
-      # Login users, session secret, and papers added through the "+ Add Paper" form.
+      # Login users and the session secret.
       - ./state:/app/state
     restart: unless-stopped

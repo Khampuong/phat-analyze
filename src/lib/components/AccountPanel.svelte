@@ -149,15 +149,15 @@
                   <span class="role-badge" class:admin={u.role === 'admin'}>{u.role}</span>
                   {#if confirmingEmail === u.email}
                     <button class="mini-btn danger" on:click={() => confirmDelete(u.email)} disabled={deletingEmail === u.email}>
-                      {deletingEmail === u.email ? '...' : 'ยืนยันลบ'}
+                      {deletingEmail === u.email ? '...' : 'Confirm'}
                     </button>
-                    <button class="mini-btn" on:click={cancelDelete} disabled={deletingEmail === u.email}>ยกเลิก</button>
+                    <button class="mini-btn" on:click={cancelDelete} disabled={deletingEmail === u.email}>Cancel</button>
                   {:else if isSelf}
-                    <span class="mini-hint" title="ลบบัญชีตัวเองไม่ได้ตอนที่ยัง sign in อยู่">คุณ</span>
+                    <span class="mini-hint" title="You can't delete your own account while signed in">you</span>
                   {:else if isLastAdmin}
-                    <span class="mini-hint" title="ต้องมี admin เหลืออย่างน้อย 1 คน">admin คนสุดท้าย</span>
+                    <span class="mini-hint" title="At least one admin must remain">last admin</span>
                   {:else}
-                    <button class="mini-btn danger" on:click={() => askDelete(u.email)}>ลบ</button>
+                    <button class="mini-btn danger" on:click={() => askDelete(u.email)}>Delete</button>
                   {/if}
                 </span>
               </li>

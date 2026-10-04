@@ -34,7 +34,7 @@
 <section class="cv-section">
   <div class="cv-header">
     <h2>Citation Templates</h2>
-    <p class="subtitle">Ready-to-paste citation sentences สำหรับ thesis — คลิก Copy บน block ใดก็ได้</p>
+    <p class="subtitle">Ready-to-paste citation sentences. Click Copy on any block.</p>
   </div>
 
   <div class="citations-list">

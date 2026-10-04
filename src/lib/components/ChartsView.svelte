@@ -101,7 +101,7 @@
 <section class="charts-section">
   <div class="charts-header">
     <h2>Corpus Charts</h2>
-    <p class="subtitle">จำนวน paper ต่อโดเมน และการกระจายของคะแนน relevance ทั้งคลัง {totalPapers}/{totalTarget} papers</p>
+    <p class="subtitle">Papers per domain and the spread of relevance scores across the corpus ({totalPapers}/{totalTarget} papers)</p>
   </div>
 
   <!-- ── Chart 1: papers per domain ── -->
@@ -109,7 +109,7 @@
     <div class="chart-card-head">
       <div>
         <h3>Papers per Domain</h3>
-        <p class="chart-sub">แท่งทึบ = จำนวนปัจจุบัน · เส้นประ = เป้าหมาย (รวม {totalTarget} papers)</p>
+        <p class="chart-sub">Solid bar = current count · dashed line = target ({totalTarget} papers in total)</p>
       </div>
       <button class="table-toggle" on:click={() => domainTable = !domainTable}>
         {domainTable ? 'Chart view' : 'Table view'}
@@ -177,7 +177,7 @@
     <div class="chart-card-head">
       <div>
         <h3>Relevance Score Distribution</h3>
-        <p class="chart-sub">จำนวน paper ต่อคะแนนความเกี่ยวข้อง (1–10) ทั้งคลัง {totalPapers} papers</p>
+        <p class="chart-sub">Papers per relevance score (1–10), {totalPapers} papers in the corpus</p>
       </div>
       <button class="table-toggle" on:click={() => scoreTable = !scoreTable}>
         {scoreTable ? 'Chart view' : 'Table view'}

@@ -39,5 +39,5 @@ export const createUser = (email, password, role) =>
 export const deleteUser = (email) =>
   request(`/api/users/${encodeURIComponent(email)}`, { method: 'DELETE' })
 
-export const addPaper = (payload) =>
-  request('/api/papers', { method: 'POST', body: JSON.stringify(payload) })
+export const saveCollection = (name, value) =>
+  request(`/api/data/${name}`, { method: 'PUT', body: JSON.stringify(value) })

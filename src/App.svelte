@@ -10,7 +10,7 @@
   import ChartsView from './lib/components/ChartsView.svelte'
   import Login from './lib/components/Login.svelte'
   import AccountPanel from './lib/components/AccountPanel.svelte'
-  import AddPaperForm from './lib/components/AddPaperForm.svelte'
+  import ManageData from './lib/components/manage/ManageData.svelte'
   import { me, logout, fetchAppData } from './lib/auth.js'
 
   const buildDate = __BUILD_DATE__
@@ -51,7 +51,7 @@
     appData = null
   }
 
-  async function handlePaperAdded() {
+  async function refreshAppData() {
     appData = await fetchAppData()
   }
 
@@ -71,7 +71,7 @@
     { id: 'charts',   label: 'Charts' },
     { id: 'rejected', label: 'Rejected Papers' },
   ]
-  $: tabs = user?.role === 'admin' ? [...baseTabs, { id: 'addpaper', label: '+ Add Paper' }] : baseTabs
+  $: tabs = user?.role === 'admin' ? [...baseTabs, { id: 'manage', label: 'Manage Data' }] : baseTabs
 
   $: filtered = papers
     .filter(p => activeDomain === 0 || p.domain === activeDomain)
@@ -128,8 +128,8 @@
         <div class="prog-fill" style="width:{overallPct}%"></div>
       </div>
       <div class="prog-count">{totalPapers} / {totalTarget} papers ({overallPct}%)</div>
-      <button class="prog-breakdown" on:click={() => activeTab = 'rejected'} title="ดูรายละเอียด Rejected Papers">
-        อ่านทั้งหมด {totalReviewed} · เข้าคลัง {totalPapers} · ไม่เอา {rejectedOutright} · เข้าแล้วถอน {removedAfterInclusion}
+      <button class="prog-breakdown" on:click={() => activeTab = 'rejected'} title="See Rejected Papers">
+        Read {totalReviewed} · included {totalPapers} · rejected {rejectedOutright} · removed {removedAfterInclusion}
       </button>
     </div>
 
@@ -203,8 +203,8 @@
             {config.pipelineTitle}
           {:else if activeTab === 'charts'}
             Corpus Charts
-          {:else if activeTab === 'addpaper'}
-            Add Paper
+          {:else if activeTab === 'manage'}
+            Manage Data
           {:else if activeTab === 'rejected'}
             Rejected Papers <span class="count-badge">{rejected.length}</span>
           {/if}
@@ -282,8 +282,8 @@
       {:else if activeTab === 'rejected'}
         <RejectedPapersView {rejected} totalIncluded={totalPapers} />
 
-      {:else if activeTab === 'addpaper'}
-        <AddPaperForm {domains} on:added={handlePaperAdded} />
+      {:else if activeTab === 'manage'}
+        <ManageData {appData} refresh={refreshAppData} />
       {/if}
     </div>
   </main>
