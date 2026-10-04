@@ -230,7 +230,8 @@ Then start again from step 2️⃣, defining your domains.
 
 ## 🙏 Credits and background
 
-Developed by **Wanut Padee**.
+Developed by **Wanut Padee**,
+Computer Scientist, Digital Infrastructure Section, Office of Digital Technology, Khon Kaen University.
 
 💡 **Why it exists:** the developer's own pain point. After reading a lot of papers, it was easy to forget which ones had been read, why one was excluded, or where it was supposed to be cited 😅 This tool keeps all of that in one place.
 
