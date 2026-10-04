@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.vite/
+.env
+app.env
+custom-papers.json
+state/
+papers/*
+!papers/.gitkeep

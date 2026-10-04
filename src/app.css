@@ -1,0 +1,144 @@
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Light theme (default token values) */
+  --bg:       #f4f5fb;
+  --surface:  #ffffff;
+  --surface2: #eef0f9;
+  --surface3: #e3e7f6;
+  --border:   #dde1f2;
+  --border2:  #c7cee6;
+
+  --text:     #1b1e2e;
+  --text2:    #4c5273;
+  --text3:    #656d95;
+
+  --accent:   #4a63e0;
+  --accent2:  #7c5ce0;
+  --accent-glow: rgba(74,99,224,0.10);
+
+  --d1: #4a63e0;
+  --d2: #7c5ce0;
+  --d3: #0f9d70;
+  --d4: #c98a06;
+  --d5: #d1560c;
+  --d6: #dc2626;
+
+  --score9:  #059669;
+  --score8:  #10b981;
+  --score7:  #d97706;
+  --score6:  #ea580c;
+  --score5:  #dc2626;
+  --score3:  #b91c1c;
+
+  --tag-yes-bg:    rgba(74,99,224,0.08);
+  --tag-yes-border:rgba(74,99,224,0.35);
+  --tag-yes-text:  #33469e;
+  --tag-warn-bg:    rgba(217,119,6,0.10);
+  --tag-warn-border:rgba(217,119,6,0.35);
+  --tag-warn-text:  #8a5c05;
+
+  --danger:        #c62828;
+  --danger-bg:     rgba(198,40,40,0.08);
+  --danger-border: rgba(198,40,40,0.35);
+  --success:       #0f8a5f;
+  --success-bg:    rgba(15,138,95,0.10);
+  --success-border:rgba(15,138,95,0.35);
+
+  --radius:  8px;
+  --radius2: 12px;
+  --transition: 0.18s ease;
+}
+
+/* Dark theme override — toggled via data-theme on <html> (see main.js / App.svelte) */
+:root[data-theme="dark"] {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --surface3: #2a2f4a;
+  --border:   #2d3250;
+  --border2:  #3d4470;
+
+  --text:     #e8eaf6;
+  --text2:    #9da5cc;
+  --text3:    #5c6490;
+
+  --accent:   #6c8fff;
+  --accent2:  #a78bfa;
+  --accent-glow: rgba(108,143,255,0.15);
+
+  --d1: #6c8fff;
+  --d2: #a78bfa;
+  --d3: #34d399;
+  --d4: #fbbf24;
+  --d5: #f97316;
+  --d6: #ef4444;
+
+  --score9:  #10b981;
+  --score8:  #34d399;
+  --score7:  #fbbf24;
+  --score6:  #f97316;
+  --score5:  #ef4444;
+  --score3:  #f87171;
+
+  --tag-yes-bg:    rgba(108,143,255,0.12);
+  --tag-yes-border:rgba(108,143,255,0.3);
+  --tag-yes-text:  #93acff;
+  --tag-warn-bg:    rgba(251,191,36,0.12);
+  --tag-warn-border:rgba(251,191,36,0.3);
+  --tag-warn-text:  #fcd34d;
+
+  --danger:        #fca5a5;
+  --danger-bg:     rgba(239,68,68,0.12);
+  --danger-border: rgba(239,68,68,0.3);
+  --success:       #6ee7b7;
+  --success-bg:    rgba(16,185,129,0.12);
+  --success-border:rgba(16,185,129,0.3);
+}
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Utility ──────────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.tag.yes   { background: var(--tag-yes-bg); border-color: var(--tag-yes-border); color: var(--tag-yes-text); }
+.tag.warn  { background: var(--tag-warn-bg); border-color: var(--tag-warn-border); color: var(--tag-warn-text); }
+.tag.muted { background: rgba(93,101,136,0.15);  border-color: rgba(93,101,136,0.3);  color: var(--text3); }
+
+.badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+.badge.caution { background: var(--tag-warn-bg); color: var(--tag-warn-text); border: 1px solid var(--tag-warn-border); }

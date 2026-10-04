@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:80"
+    environment:
+      - PORT=80
+      # Set to true when a reverse proxy (nginx, Caddy, ...) serves the app over HTTPS.
+      - COOKIE_SECURE=false
+      - DATA_DIR=/app/data
+      - PAPERS_DIR=/app/papers
+      - AUTH_ENV_PATH=/app/state/users.env
+      - CUSTOM_PAPERS_PATH=/app/state/custom-papers.json
+      # First-run only: creates the first admin when no users exist yet. Safe to remove afterwards.
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+    volumes:
+      # Your corpus (JSON files) — edit on the host, then refresh the browser to see changes.
+      - ./data:/app/data:ro
+      # Optional paper PDFs: papers/<domain slug>/D<domain>-<NN>-<name>.pdf
+      - ./papers:/app/papers:ro
+      # Login users, session secret, and papers added through the "+ Add Paper" form.
+      - ./state:/app/state
+    restart: unless-stopped
